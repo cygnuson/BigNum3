@@ -112,32 +112,20 @@ public:
 	///////////////////////////////////////////////////////////////////////////
 
 	/**Direct access to the data.
-	\return The data as a T&.*/
-	operator StoreType& ()
-	{
-		return Get();
-	}
-	/**Direct access to the data.
-	\return The data as a const T&.*/
-	operator const StoreType&() const
-	{
-		return Get();
-	}
-	/**Direct access to the data.
 	\param i A compatibility param. Must be 1.
 	\return The data as a T&.*/
-	StoreType& Get(std::size_t i = 1)
+	BasicStoreType& Get(std::size_t i = 0)
 	{
-		if (i != 1)
+		if (i != 0)
 			throw std::invalid_argument("Paramter out of bounds.");
 		return m_data;
 	}
 	/**Direct access to the data.
 	\param i A compatibility param. Must be 1.
 	\return The data as a T&.*/
-	const StoreType& Get(std::size_t i = 1) const
+	const BasicStoreType& Get(std::size_t i = 0) const
 	{
-		if (i != 1)
+		if (i != 0)
 			throw std::invalid_argument("Paramter out of bounds.");
 		return m_data;
 	}
@@ -146,7 +134,7 @@ public:
 	\return The data as a T&.*/
 	auto& operator[](std::size_t i)
 	{
-		if (i != 1)
+		if (i != 0)
 			throw std::invalid_argument("Paramter out of bounds.");
 		return Get();
 	}
@@ -155,7 +143,7 @@ public:
 	\return The data as a T&.*/
 	const auto& operator[](std::size_t i) const
 	{
-		if (i != 1)
+		if (i != 0)
 			throw std::invalid_argument("Paramter out of bounds.");
 		return Get();
 	}

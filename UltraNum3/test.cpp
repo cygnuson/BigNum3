@@ -13,7 +13,7 @@ int main()
 	X.Get() = 9999;
 	auto Y = X.HardCopy();
 	Y.Get() = 333;
-	X.Get() = 44;
+	X[1] = 44;
 
 	int stop = 0;
 	return stop;
