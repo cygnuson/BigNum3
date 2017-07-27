@@ -111,6 +111,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Endian.cpp" />
+    <ClCompile Include="test.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Endian.hpp" />
+    <ClInclude Include="Helpers.hpp" />
+    <ClInclude Include="List.hpp" />
+    <ClInclude Include="Num.hpp" />
+    <ClInclude Include="Power.hpp" />
+    <ClInclude Include="Rational.hpp" />
+    <ClInclude Include="Type.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
