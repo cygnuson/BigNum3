@@ -36,7 +36,6 @@ template<typename T>
 class DemoteType {
 public:
 	/*There is intentionaly no Type here.*/
-	using Type = T;
 };
 /**\sa DemoteType*/
 template<>
@@ -75,7 +74,7 @@ template<typename T>
 class PromoteType {
 public:
 	/*There is intentionaly no Type here.*/
-	using Type = T;
+
 };
 /**\sa PromoteType*/
 template<> class PromoteType<uint32_t> {

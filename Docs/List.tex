@@ -1,0 +1,130 @@
+\documentclass{article}
+\usepackage{fancyhdr}
+%for headers
+\usepackage{textcomp}
+%for angles
+\usepackage{listings}
+%for code listing
+\usepackage{xcolor}
+%for highlighting
+\usepackage{caption}
+\usepackage{calc}
+%for code boxes
+\usepackage{varioref}
+%for fancey references
+\usepackage{fancyvrb}
+%for fancey Verbs
+
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{%
+	\parbox{\textwidth}{\colorbox{gray}{\parbox{\textwidth}{#1#2#3}}\vskip-4pt}}
+\newlength\tdima \newlength\tdimb \setlength\tdima{ \fboxsep+\fboxrule} \setlength\tdimb{-\fboxsep+\fboxrule}
+
+\renewcommand\lstlistingname{Example}
+
+
+\newcommand{\theobj}{\protect\Verb+List<T,std::size\underline{ }t> +}
+\newcommand{\thedocname}{The \theobj Class}
+\rhead{\hfill {\thedocname}}
+\pagestyle{fancy}
+\cfoot{\thedocname :\quad Page \thepage}
+
+\begin{document}
+
+\tableofcontents
+
+
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{codetext}{rgb}{0.7,0.7,0.7}
+\definecolor{backcolour}{rgb}{0.8,0.8,0.8}
+
+\lstdefinestyle{cppstyle}{
+	frame=tlrb,
+	xleftmargin=\tdima,
+	xrightmargin=\tdimb,
+	backgroundcolor=\color{backcolour},
+	commentstyle=\color{codegreen}\ttfamily,
+	keywordstyle=\color{blue}\ttfamily,
+	numberstyle=\scriptsize\color{codegray},
+	stringstyle=\color{red}\ttfamily,
+	basicstyle=\footnotesize\ttfamily,
+	breakatwhitespace=false,         
+	breaklines=true,                  
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
+}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white}
+\lstset{style=cppstyle}
+
+\section{The \theobj Class}
+
+The \theobj class is an object that may be heap allocated or stack allocated.  Its intended to be used with template classes where the class will determine if the list should allocated its contents on the heap or on the stack.  The use of \theobj must know at compile time which allocation method will be used.
+
+\subsection{The Basic Function of \theobj}
+
+
+\begin{lstlisting}[language=C++, label=code:1, caption=Demoting types]
+
+List<int, 0> heapList;   //Allocated on the heap, auto resizes.
+List<int, 30> stackList; //Allocated on the stack, will not resize.
+
+template<bool UseStack>
+class Points
+{
+public:
+	/* ... Member functions ...*/
+private:
+	cg::List<int, UseStack ? 100 : 0> m_points;
+};
+
+...
+/*Reguardless of the location of the data, the list is used in exactly the same way, with exactly the same code.*/
+Points<false> m_slowPoints; //Slow heap based data
+Points<true> m_fastPoints;  //Fast stack data
+...
+
+\end{lstlisting}
+
+The \theobj Class, when stack allocated, will keep track of how many units of its array are used.  It works exactly the same way as a heap list except that it has a max capacity, which is its \Verb+std::size_t+ parameter.  When the max capacity is hit, it will throw a \Verb+std::runtime_error+.  See the following section on how to use the \theobj interchangeably with stack and heap mode.
+\paragraph{Why?} \hfill \\
+\par
+A developer may wish to have a single class that can be used for both stack based calculation and heap based calculations.  Two classes could have been made, one for the stack, and one for the heap, but why write overhead twice?
+
+\subsection{Using \theobj}
+
+Member functions are provided to access the list in a way that it mey be stack or heap based without changing any operating code (except for the template parameter that determines the location of data).
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -2,6 +2,7 @@
 #include <utility>
 
 #include "Num.hpp"
+#include "List.hpp"
 
 const uint16_t& testfunc(const uint16_t& t)
 {
@@ -24,15 +25,19 @@ struct testclass {
 	uint16_t n = 5555;
 };
 
-template<const bool e>
-bool r()
+template<bool UseStack>
+class Points
 {
-	return e;
-}
+public:
+	/* ... Member functions ...*/
+private:
+	cg::List<int, UseStack ? 100 : 0> m_points;
+};
 
 int main(int argc, char ** argv)
 {
 
+	Points<true> p;
 
 	int stop = 0;
 	return stop;
