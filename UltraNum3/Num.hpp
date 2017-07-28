@@ -28,6 +28,9 @@ along with UltraNum2.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #endif
 
+#include "Type.hpp"
+#include "Endian.hpp"
+
 
 namespace cg {
 
@@ -40,16 +43,19 @@ namespace cg {
 The two opts for T are:
 ....const type&  :Will be a non reference type, which takes const& ctor params.
 ....type&        :Will be a ref type that takes ref ctor parameters.
-\tparam T The type of parameter to take int the CTOR. 
----If T=cosnt type& then it will have stack data and copy or move a const T& 
+\tparam T The type of parameter to take int the CTOR.
+---If T=cosnt type& then it will have stack data and copy or move a const T&
 or T&&.
----If T= type& it will have a reference to another object as data and will 
+---If T= type& it will have a reference to another object as data and will
 take a referenc (non const) in the ctor.
 */
 template<typename _Internal_T>
 class Num
 {
 public:
+	/**True if this thing is const.*/
+	const static bool IAmConst
+		= std::is_const<std::remove_reference_t<_Internal_T>>::value;
 	/**The storage type.*/
 	using StoreType = std::conditional_t<
 		/*If T is const:*/
@@ -71,12 +77,14 @@ public:
 	using NonRefSelf = Num<const std::remove_reference_t<StoreType>&>;
 	/**A self reference type.*/
 	using Self = Num<_Internal_T>;
+	/**The demoted type.*/
+	using DemotedBaseType = typename cg::DemoteType<BasicStoreType>::Type;
 	/**Create the num storage with a reference.*/
 	Num(_Internal_T&& num = 0)
 		:m_data(std::forward<_Internal_T>(num)) {}
 	/**Copy ctor
 	\param other The other thing to copy.*/
-	Num(const Num& other)
+	Num(const Num<_Internal_T>& other)
 		:m_data(other.m_data) {}
 
 	///////////////////////////////////////////////////////////////////////////
@@ -188,10 +196,126 @@ public:
 	{
 		return NonRefSelf(m_data);
 	}
+	/**Swap the value of this and another thing.
+	\param other The other thing to swap with.*/
+	template<typename U>
+	void Swap(Num<U>& other)
+	{
+		auto t = m_data;
+		m_data = other.m_data;
+		other.m_data = t;
+	}
+
+	///////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////SPLITTERS HERE//
+	///////////////////////////////////////////////////////////////////////////
+
+	/**Get the upper part of the number.
+	\return A reference to the upper part of the number.*/
+	auto Hi()
+	{
+		if (!cg::Endian::little)
+			return Num<DemotedBaseType&>
+			(*((DemotedBaseType*)&m_data));
+		else
+			return Num<DemotedBaseType&>
+			(*(((DemotedBaseType*)&m_data) + 1));
+	}
+	/**Get the upper part of the number.
+	\return A reference to the upper part of the number.*/
+	const auto Hi() const
+	{
+		if (!cg::Endian::little)
+			return Num<const DemotedBaseType&>
+			(*((DemotedBaseType*)&m_data));
+		else
+			return Num<const DemotedBaseType&>
+			(*(((DemotedBaseType*)&m_data) + 1));
+	}
+	/**Get the lower part of the number.
+	\return A reference to the lower part of the number.*/
+	auto Lo()
+	{
+		if (cg::Endian::little)
+			return Num<DemotedBaseType&>
+			(*((DemotedBaseType*)&m_data));
+		else
+			return Num<DemotedBaseType&>
+			(*(((DemotedBaseType*)&m_data) + 1));
+	}
+	/**Get the lower part of the number.
+	\return A reference to the lower part of the number.*/
+	const auto Lo() const
+	{
+		if (cg::Endian::little)
+			return Num<const DemotedBaseType&>
+			(*((DemotedBaseType*)&m_data));
+		else
+			return Num<const DemotedBaseType&>
+			(*(((DemotedBaseType*)&m_data) + 1));
+	}
+
 private:
 	/**The internal data.*/
 	StoreType m_data;
 };
+
+
+/**Create a Num in a wrapper.
+\param n The number.
+\return A number in the Num wrapper, which references the parameter `n`.*/
+template<typename T>
+auto MakeNum(T&& n)
+{
+	/*Will be true if T is deduced to be const& or T&&.*/
+	const static bool IsConst
+		/*Is Const& */
+		= std::is_const<std::remove_reference_t<T>>::value
+		/*Or T&& */
+		|| std::is_rvalue_reference<T&&>::value;
+	/*The base type of data when all the qualifiers are stripped away.*/
+	using RawBaseType
+		= std::remove_const_t<std::remove_reference_t<T>>;
+	/*The Type that has been deduced to be Num Template parameter.*/
+	using Type = std::conditional_t<
+		IsConst,
+		const T&,
+		T&
+	>;
+	/*Return the Proper num object.*/
+	return cg::Num<Type>(std::forward<T>(n));
+}
+/**Create a Num in a wrapper.
+\param n The number.
+\return A number in the Num wrapper, which references the parameter `n`.*/
+template<typename T>
+auto MakeNum(const Num<T>& n)
+{
+	return MakeNum(n.Get());
+}
+/**Create a Num in a wrapper.
+\param n The number.
+\return A number in the Num wrapper, which references the parameter `n`.*/
+template<typename T>
+auto MakeNum(Num<T>& n)
+{
+	return MakeNum(n.Get());
+}
+
+/**Create a Num in a wrapper.
+\param n The number.
+\return A number in the Num wrapper, which references the parameter `n`.*/
+template<typename T>
+auto MakeNumC(const T& n)
+{
+	return MakeNum(n);
+}
+
+/**Helper for making nums.*/
+template<typename T, bool Ref>
+using NumType = std::conditional_t<Ref,
+	cg::Num<T&>,
+	cg::Num<const T&> >;
 
 template class Num<const uint64_t&>;
 

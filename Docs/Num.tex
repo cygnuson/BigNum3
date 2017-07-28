@@ -1,0 +1,351 @@
+\documentclass{article}
+\usepackage{fancyhdr}
+%for headers
+\usepackage{textcomp}
+%for angles
+\usepackage{listings}
+%for code listing
+\usepackage{xcolor}
+%for highlighting
+\usepackage{caption}
+\usepackage{calc}
+%for code boxes
+\usepackage{varioref}
+%for fancey references
+\usepackage{fancyvrb}
+%for fancey Verbs
+
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{%
+	\parbox{\textwidth}{\colorbox{gray}{\parbox{\textwidth}{#1#2#3}}\vskip-4pt}}
+\newlength\tdima \newlength\tdimb \setlength\tdima{ \fboxsep+\fboxrule} \setlength\tdimb{-\fboxsep+\fboxrule}
+
+\renewcommand\lstlistingname{Example}
+
+
+\newcommand{\theobj}{\protect\Verb+Num<T> +}
+\newcommand{\thedocname}{The \theobj Class}
+\rhead{\hfill {\thedocname}}
+\pagestyle{fancy}
+\cfoot{\thedocname :\quad Page \thepage}
+
+\begin{document}
+
+\tableofcontents
+
+
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{codetext}{rgb}{0.7,0.7,0.7}
+\definecolor{backcolour}{rgb}{0.8,0.8,0.8}
+
+\lstdefinestyle{cppstyle}{
+	frame=tlrb,
+	xleftmargin=\tdima,
+	xrightmargin=\tdimb,
+	backgroundcolor=\color{backcolour},
+	commentstyle=\color{codegreen}\ttfamily,
+	keywordstyle=\color{blue}\ttfamily,
+	numberstyle=\scriptsize\color{codegray},
+	stringstyle=\color{red}\ttfamily,
+	basicstyle=\footnotesize\ttfamily,
+	breakatwhitespace=false,         
+	breaklines=true,                  
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
+}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white}
+\lstset{style=cppstyle}
+
+\section{The \theobj Class}
+
+\theobj is a multipurpose object for storing numbers in an easier to use wrapper. \textbf{In depth documentation is available through the doxygen folder, or can be generated with the included doxyfile in the source folder.}  All classes and functions related to \theobj are inside the namespace \protect\Verb+cg+.
+
+
+In this section, You will lean how to create a \theobj with the MakeNum and NumType helpers that will deduce the proper template parameters, and directly with \theobj type itself.
+
+For the \theobj class, the parameter of \Verb+T+ will be the type of argument the constructor will take when creating the object.  If \Verb+T=const int&+ then the constructor will take a \Verb+const int&+ and its data will be of type \Verb+int+. If \Verb+T=int&+ then the constructor will take \Verb+int&+ and its data will be \Verb+int&+.  The constructor uses \Verb+T&&+ parameter for proper forwarding based on the template parameter T.  Using the helper \protect\Verb+cg::MakeNum+ in section \vref{s:helper} is recommended.
+
+The following example code(Example \vref{code:test}) is a set of rval and lval test functions and a test class.
+
+\begin{lstlisting}[language=C++, label=code:test, caption=Test Functions and Classes]
+/**ConstRef example*/
+const uint16_t& testfunc(const uint16_t& t)
+{
+	return t;
+}
+/**Ref example*/
+uint16_t& testfunc(uint16_t& t)
+{
+	return t;
+}
+/**Member ref example*/
+struct testclass {
+	uint16_t& Get()
+	{
+		return n;
+	}
+	const uint16_t& Get() const
+	{
+		return n;
+	}
+	uint16_t m_num = 5555;
+};
+\end{lstlisting}
+\pagebreak
+\subsection{The \protect\Verb+cg::MakeNum+ Helper}
+\label{s:helper}
+
+The first thing to know is the helper function \protect\Verb+cg::MakeNum+.  It will take any argument of a fundamental type or \theobj type and make a reference or copy depending on the the deduction of T. See Example \vref{code:1}. 
+
+\begin{lstlisting}[language=C++, label=code:1, caption=Reference with cg::MakeNum]
+uint16_t n = 4;
+auto a = cg::MakeNum(n); //`a` is now REFERENCING `n`
+a.Set(89); //`a` REFERENCES `n` which now equals 89.
+bool check1 = a.Get() == 89; //true
+check1 = n == 89; //true
+\end{lstlisting}
+
+The \theobj Can also be used to create a regular wrapper that owns its own data and wont be invalidated before destruction.  
+
+\begin{lstlisting}[language=C++, label=code:2, caption=Copy with cg::MakeNum]
+const uint16_t m = 4;
+auto b = cg::MakeNum(m); //`b` is now a COPY of `m`
+b.Set(89); //`b` does NOT reference `m`.
+bool check2 = b.Get() == 89; //true
+check2 = m == 89; //false
+\end{lstlisting}
+
+\protect\Verb+cg::MakeNumC+ Will force the creating of a copy instead of a reference. See Example \vref{code:3}.
+
+\begin{lstlisting}[language=C++, label=code:3, caption=cg::Forcing Copies]
+uint16_t n = 4;
+auto a2 = cg::MakeNum((const uint16_t&) n); //will copy `n` instead of reference.
+auto a3 = cg::MakeNumC(n); //Same as above line
+\end{lstlisting}
+
+Even other \theobj can be referenced or copied. See Example \vref{code:4}.
+
+\begin{lstlisting}[language=C++, label=code:4, caption=MakeNum with cg::MakeNum]
+uint16_t n = 4;
+auto a = cg::MakeNum(n);       // a references n
+auto b = cg::MakeNum(a);       //b references a
+b.Set(89);                     //sets a,b, and n to 89.
+bool check = n == b.Get();     //true
+bool check2 = n == a.Get();    //true
+bool check3 = &n == &b.Get();  //true
+bool check4 = &n == &a.Get();  //true
+\end{lstlisting}
+\pagebreak
+A reference \theobj can be copied by another \theobj or it can be referenced by a reference \theobj. See Example \vref{code:5}.
+
+\begin{lstlisting}[language=C++, label=code:5, caption=Referencing a Copy]
+uint16_t n = 4;
+auto a = cg::MakeNumC(n);      // a does not reference n
+auto b = cg::MakeNum(a);       //b references a
+b.Set(89);                     //sets a,b, to 89. n is unchanged.
+bool check = n == b.Get();     //false
+bool check2 = n == a.Get();    //false
+bool check3 = &n == &b.Get();  //false
+bool check4 = &n == &a.Get();  //false
+bool check4 
+	= &a.Get() == &b.Get();    //true
+\end{lstlisting}
+
+Consider the above test functions in Example \vref{code:test}.  Rvalues and LValues returned by functions are valid parameters to the helper \Verb+cg::MakeNumC+ and \Verb+cg::MakeNum+.
+
+\begin{lstlisting}[language=C++, label=code:5, caption=Rval and Lval returns]
+uint16_t a = 555;
+const uint16_t b = 999;
+testclass c;
+const testclass d;
+auto r = cg::MakeNum(testfunc(a));    // r is a reference of a
+auto s = cg::MakeNum(testfunc(b));    //s is a copy of b
+auto u = cg::MakeNumC(testfunc(a));   //u is a copy of a
+auto v = cg::MakeNum(c.Get());        //v is a reference of c.m_num
+auto w = cg::MakeNumC(c.Get());       //w is a copy of c.m_num
+auto x = cg::MakeNum(d.Get());        //x is a copy of d.m_num
+\end{lstlisting}
+\subsection{Using \theobj Directly}
+\hfill \\ \indent
+To use \theobj directly, one should use \Verb+decltype+ with either a \textbf{function call, or a parenthesized variable} so it will retain the type of references that the variable is. 
+\hfill \\ \hfill \\ 
+\indent
+The parameter \Verb+T+ should be used with \Verb+decltype((var))+ when \Verb+var+ is going to be the primitive parameter of the constructor for the object of \theobj (see Example \vref{code:6}).
+\pagebreak
+\begin{lstlisting}[language=C++, label=code:6, caption=Construct a \theobj with a varaible]
+uint16_t a = 888;
+const uint16_t b = 555;
+cg::Num<decltype((a))> num(a);  //num references a
+              //^^^^^ Notice the parenthesized variable name
+cg::Num<decltype((b))> num2(b); //num copies b
+              //^^^^^ Notice the parenthesized variable name
+num.Set(5432);                  //set num AND a to the value.
+num2.Set(44);                   //sets num2 ONLY.
+bool check = a == 5432;         //true
+bool check2 = &a == &num.Get()  //true
+bool check3 = b == 44;          //false
+bool check4 = &b == &num2.Get() //false
+\end{lstlisting}
+ \theobj may also be used as \Verb+decltype(testfunc(var))+ where the result of the function will be made to be the parameter of the constructor (see Example \vref{code:7}).
+\begin{lstlisting}[language=C++, label=code:7, caption=\theobj and function decyltype]
+uint16_t a = 888;                                 
+cg::Num<decltype(testfunc(a))> num(testfunc(a));  // num references a
+num.Get() = 5432;                                 // num == a == 5432
+                                                  
+const uint16_t b = 888;                           
+cg::Num<decltype(testfunc(b))> num2(testfunc(b)); // num2 copies b
+num2.Get() = 5432;                                // num2 == 5432, b == 888
+\end{lstlisting}
+
+\subsection{The \protect\Verb+cg::NumType<T,bool>+ Helper}
+
+The developer may want to create an appropriate type easily without actually creating an object. This might be useful for inheritance or making lists or using the \theobj as a template parameter in some other fashion. Thats where \protect\Verb+cg::NumType<T,bool>+ comes into play.  The \protect\Verb+cg::NumType<T,bool>+ helper is designed to get a type that is appropriate to the developers need quickly.  It will create the type automatically based on the desired reference status and type. See Example \vref{code:8}.
+
+\begin{lstlisting}[language=C++, label=code:8, caption=NumType Helper]
+int a = 999;
+const int b = 999;
+cg::NumType<const int, true> W(a); //W is a copy of a
+cg::NumType<int, true> X(a);       //X is a reference of a
+cg::NumType<const int, true> Y(b); //Y is a copy of b
+cg::NumType<int, false> Z(b);      //Z is a copy of b
+\end{lstlisting}
+
+\Verb+cg::NumType<T,bool>+ helper is also usable with \Verb+decltype+. See Example \vref{code:9}.
+\pagebreak
+\begin{lstlisting}[language=C++, label=code:9, caption=NumType Helper and decltype]
+int a = 999;
+const int b = 999;
+cg::NumType<decltype(a), true> W(a);  //W is a reference to a
+cg::NumType<decltype(a), false> X(a); //X is a copy of a
+cg::NumType<decltype(b), true> Y(b);  //Y is a copy of b
+cg::NumType<decltype(b), false> Z(b); //Z is a copy of b
+\end{lstlisting}
+An example of the \Verb+cg::NumType<T,bool>+ helper in action in Example \vref{code:10}
+
+\begin{lstlisting}[language=C++, label=code:10, caption=NumType Helper Useful Use]
+
+#include <vector>
+
+int main(int argc, char ** argv)
+{
+	int a = 999;
+	int b = 999;
+	int c = 999;
+	int d = 999;
+	int e = 999;
+	/*All are references*/
+	cg::NumType<int, true> W1(a); 
+	cg::NumType<int, true> W2(b); 
+	cg::NumType<int, true> W3(c); 
+	cg::NumType<int, true> W4(d); 
+	cg::NumType<int, true> W5(e); 
+	
+	std::vector<cg::NumType<int, true>> nums;
+	/*All are copied, but remain as references. nums.emplace_back(a) would work as well.*/
+	nums.push_back(W1);
+	nums.push_back(W2);
+	nums.push_back(W3);
+	nums.push_back(W4);
+	nums.push_back(W5);
+	
+	auto sz = nums.size();
+	for (std::size_t i = 0; i < sz; ++i)
+		nums[i].Get() = i+1;
+
+	/*Result: (a to b) == (1 to 5)*/
+	return 0;
+}
+\end{lstlisting}
+\pagebreak
+\subsection{Splitters}
+
+The \theobj Has two regular, and two const splitter functions which will decompose the number into a HI and LO part. The const versions will produce copies of the hi and low parts, and the the non-const versions will produce reference \theobj objects of the HI and LO part.  The splitters use the \Verb+Endian+ and \Verb+DemoteType+ classes. Review those sections to truly understand the Hi and Lo system.
+
+\begin{lstlisting}[language=C++, label=code:9, caption=Hi members]
+uint16_t a = 256 + 5;            // a = 0000 0001 0000 0101
+cg::Num<decltype((a))> num(a);   //references a. If a was const, it would be a copy
+auto& X = num.Hi().Get();        //Store a reference to the HI part of num in X, also references the HI part of a (for this example).  If a was const, it would not reference the Hi part of a, only num
+X = 0;                           // would be compile error IF num was const.  If num 
+bool check = a == 5              //check a == 0000 0000 0000 0101 -- true
+\end{lstlisting}
+
+\begin{lstlisting}[language=C++, label=code:9, caption=Lo members]
+uint16_t a = 256 + 5;            // a = 0000 0001 0000 0101
+cg::Num<decltype((a))> num(a);   //references a. If a was const, it would be a copy
+auto& X = num.Lo().Get();        //Store a reference to the LO part of num in X, also references the Lo part of a (for this example).  If a was const, it would not reference the Lo part of a, only num
+X = 0;                           // would be compile error IF num was const.  If num 
+bool check = a == 256            //check a == 0000 0001 0000 0000 -- true
+\end{lstlisting}
+
+\pagebreak
+\subsection{Special Members of \theobj}
+
+\theobj has various special members to help it act appropriate in certain environments.  They wont be discussed in too much detail. Refer to the Doxygen documentation for in depth information about them.  The special members are available to allow the number to be treated as a list of size 1 in place of any ol' list.
+
+
+\begin{lstlisting}[language=C++, label=code:9, caption=Special Members]
+const static bool IAmConst 
+	= std::is_const<std::remove_reference_t<_Internal_T>>::value;
+using StoreType = std::conditional_t<
+	std::is_const<std::remove_reference_t<_Internal_T>>::value,
+	std::remove_const_t<std::remove_reference_t<_Internal_T>>,
+	_Internal_T
+>;
+using BasicStoreType
+	= std::remove_const_t<std::remove_reference_t<StoreType>>;
+using RefSelf = Num<std::remove_reference_t<StoreType>&>;
+using NonRefSelf = Num<const std::remove_reference_t<StoreType>&>;
+using Self = Num<_Internal_T>;
+using DemotedBaseType = typename cg::DemoteType<BasicStoreType>::Type;
+auto* Begin();
+const auto* Begin() const;
+auto* End();
+const auto* End() const;
+BasicStoreType& Get(std::size_t i = 0);
+const BasicStoreType& Get(std::size_t i = 0) const;
+auto& operator[](std::size_t i);
+const auto& operator[](std::size_t i) const;
+RefSelf GetReference();
+void Set(const BasicStoreType& n);
+void Set(BasicStoreType&& n);
+auto Size() const;
+bool IsZero() const;
+NonRefSelf HardCopy() const;
+template<typename U>
+void Swap(Num<U>& other);
+\end{lstlisting}
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

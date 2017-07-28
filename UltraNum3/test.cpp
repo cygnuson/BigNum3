@@ -3,17 +3,36 @@
 
 #include "Num.hpp"
 
-
-int main()
+const uint16_t& testfunc(const uint16_t& t)
 {
-	uint16_t n = 4;
-	cg::Num<uint16_t&> a(n);
+	return t;
+}
+uint16_t& testfunc(uint16_t& t)
+{
+	return t;
+}
 
-	auto X = a.GetReference();
-	X.Get() = 9999;
-	auto Y = X.HardCopy();
-	Y.Get() = 333;
-	X[1] = 44;
+struct testclass {
+	uint16_t& Get()
+	{
+		return n;
+	}
+	const uint16_t& Get() const
+	{
+		return n;
+	}
+	uint16_t n = 5555;
+};
+
+template<const bool e>
+bool r()
+{
+	return e;
+}
+
+int main(int argc, char ** argv)
+{
+
 
 	int stop = 0;
 	return stop;

@@ -20,6 +20,7 @@ public:
 	*/
 	const static bool big;
 private:
+	/**The thing to check against*/
 	const static uint32_t __ENDIANNESS_CHECKER;
 };
 
