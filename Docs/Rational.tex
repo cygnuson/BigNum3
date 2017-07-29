@@ -1,0 +1,179 @@
+\documentclass{article}
+\usepackage{fancyhdr}
+%for headers
+\usepackage{textcomp}
+%for angles
+\usepackage{listings}
+%for code listing
+\usepackage{xcolor}
+%for highlighting
+\usepackage{caption}
+\usepackage{calc}
+%for code boxes
+\usepackage{varioref}
+%for fancey references
+\usepackage{fancyvrb}
+%for fancey Verbs
+
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{%
+	\parbox{\textwidth}{\colorbox{gray}{\parbox{\textwidth}{#1#2#3}}\vskip-4pt}}
+\newlength\tdima \newlength\tdimb \setlength\tdima{ \fboxsep+\fboxrule} \setlength\tdimb{-\fboxsep+\fboxrule}
+
+\renewcommand\lstlistingname{Example}
+
+
+\newcommand{\theobj}{\protect\Verb+RationalImpl<T> +}
+\newcommand{\thedocname}{The \theobj Class}
+\rhead{\hfill {\thedocname}}
+\pagestyle{fancy}
+\cfoot{\thedocname :\quad Page \thepage}
+
+\begin{document}
+
+\tableofcontents
+
+
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{codetext}{rgb}{0.7,0.7,0.7}
+\definecolor{backcolour}{rgb}{0.8,0.8,0.8}
+
+\lstdefinestyle{cppstyle}{
+	frame=tlrb,
+	xleftmargin=\tdima,
+	xrightmargin=\tdimb,
+	backgroundcolor=\color{backcolour},
+	commentstyle=\color{codegreen}\ttfamily,
+	keywordstyle=\color{blue}\ttfamily,
+	numberstyle=\scriptsize\color{codegray},
+	stringstyle=\color{red}\ttfamily,
+	basicstyle=\footnotesize\ttfamily,
+	breakatwhitespace=false,         
+	breaklines=true,                  
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
+}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white}
+\lstset{style=cppstyle}
+
+\section{The \theobj Class}
+
+The \theobj Class is a rational (fractions) class. 
+
+\subsection{Using \theobj}
+
+Its very simple to use.  \Verb+Rational(1,2)+ will be a rational with data as the type \Verb+std::ptrdiff_t+. Using rational with a data type that cannot be used with the unary \Verb+-+ operator is undefined.
+
+\begin{lstlisting}[language=C++, label=code:1, caption=Creating organized rationals with \theobj]
+cg::RationalImpl<int16_t> r(4, 8); //numerator and denominator are type int16_t.
+cg::Rational r2(4, 8);//numerator and denominator are type std::ptrdiff_t.  
+r2.AutoSimp(true); //Will also simplify automatically.
+\end{lstlisting}
+
+Creating the \theobj and using the \Verb+r.AutoSimp(true)+ will cause it to attempt to simplify the object after each operation.  It is recomended to use typedef or using declarations for this class (such as \Verb+using BigRational = RationalImpl<SomeBigNumClass>;+).
+
+\paragraph{Why?} \hfill \\
+The reason for this classes existance is that some developers may want floating point number that is 100\% accurate and can be used without having to deal with the rounding of floats and double. Combined with a int64\underline{ }t data type, The rational object can be a fractional value with 100\% accuracy as far as the datatype can handle. \textbf{Bigger user defined datatypes may also be used as long as they have the operators for math defined.}
+
+\subsection{From double to \theobj}
+
+Creating a \theobj from a double value is easy.
+
+\begin{lstlisting}[language=C++, label=code:1, caption=Creating organized rationals with \theobj]
+auto r = cg::Rational::Make(0.444329, 9); //9 is the amount of decimals to keep. r == (444329000 / 1000000000)
+r.AutoSimp(true); // autosimp is now on: r == (444329 / 1000000)
+\end{lstlisting}
+
+The simplification of the rational uses the euclidean GCD algorithm, and the LCM algorithm uses the GCD to speed things up, so both use euclidean algorithms.
+
+\subsection{Inverses of \theobj}
+
+The \theobj class has 4 functions dealing with inverses. \Verb+AInverse(), Opposite()+ and \Verb+MInverse(), Reciprocal()+.
+
+
+\begin{lstlisting}[language=C++, label=code:1, caption=Creating organized rationals with \theobj]
+cg::Rational r2(4, 8);
+auto X = r2.Reciprocal(); //X now = rational of (8/4).
+r2.MakeReciprocal();      //r2 now is (8/4).
+auto Y = r2.Opposite();   //Y is now -(8/4).
+r2.MakeOpposite();        //r2 is now -(8/4).
+r2.Simplify();            //r2 is now -(2/1).
+\end{lstlisting}
+
+For the rational number, \Verb+MInverse()+ is the same as \Verb+Reciprocal()+ and \Verb+AInverse()+ is the same as \Verb+Opposite()+. Each function has a version that is \Verb+r.Make***+ where the stars are Opposite, Reciprocal, AInverse, MInverse.
+
+\subsection{Scaling Up and Down}
+
+The rational can also be scaled, which is multiplying or dividing the numerator and denominator by the same value.
+
+
+\begin{lstlisting}[language=C++, label=code:1, caption=Creating organized rationals with \theobj]
+cg::Rational r2(4, 8);
+r2.ScaleUp(3);         //r2 = (12, 24)
+r2.ScaleDown(3);       //r2 = (4, 8) .... returns true
+r2.ScaleDown(3);       //return false, nothing done, 3 is not evenly divisable by the numerator and denominator.
+\end{lstlisting}
+If the values are not divisible by the \Verb+ScaleDown()+ argument, then nothing happens and \Verb+false+ is returned. If they are divisible (both of them), they are scaled down and \Verb+true+ is returned.
+
+\subsection{Math with \theobj}
+
+All math and comparisons are overloaded.
+
+\begin{lstlisting}[language=C++, label=code:1, caption=Creating organized rationals with \theobj]
+cg::Rational r2(4, 8);
+cg::Rational r3(4, 9);
+auto X = r2 (+,-,*,/) r3; //Works as expected
+auto Y = r2 (<,<=, ==, !=, >, >=) r3 //Works as expected.
+r2 (+=, -=, *=, /=) r3;    //Works as expected.
+r2 (+=, -=, *=, /=) 97;    //Works as expected.
+++r2; r2++; --r2; r2--; -r2; //All works as expected.
+\end{lstlisting}
+
+All operators except the modulo operator will work properly.
+
+\subsection{Evaluation}
+
+The \theobj class can be evaluated to another number, provided that the data type can take a constructor of type T, and T has the /= operator working properly.
+
+
+\begin{lstlisting}[language=C++, label=code:1, caption=Creating organized rationals with \theobj]
+cg::Rational r2(4, 8);
+auto someBigDecimal = r2.Eval<SomeBigDecimalType>();
+\end{lstlisting}
+
+The accuracy of the Eval functions is only as good as the /= operator for the type given to it.
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

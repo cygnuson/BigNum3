@@ -69,29 +69,23 @@ public:
 	{
 		double intPart = 0;
 		double floatPart = modf(num, &intPart);
-		pre = (T)pow(10, pre);
+		pre = (uint64_t)pow(10, pre);
 		floatPart *= pre;
 		return SelfType{(T)floatPart + ((T)pre * (T)intPart),
 			(T)pre};
 	}
 	/**Create the rational number.
 	\param n The numerator
-	\param d The denominator
-	\param opt Any options to use as bitflags.*/
-	RationalImpl(const T& n, const T& d, OptRational opt = OptRational::None)
+	\param d The denominator*/
+	RationalImpl(const T& n, const T& d)
 	{
 		Set(n, d);
-		if (opt == OptRational::AutoSimplify)
-			AutoSimp(true);
 	}
 	/**Create the rational with a 1 in the denominator.
-	\param n The numerator.
-	\param opt Any options to use as bitflags.*/
-	RationalImpl(const T& n, OptRational opt = OptRational::None)
+	\param n The numerator.*/
+	RationalImpl(const T& n)
 	{
 		Set(n, 1);
-		if (opt == OptRational::AutoSimplify)
-			AutoSimp(true);
 	}
 	/**move ctor
 	\param other The thing to set this to.*/
@@ -139,13 +133,13 @@ public:
 	}
 	/**Get reciprical (multiply inverse)
 	\return The reciprical of the rational.*/
-	SelfType Recipricol() const
+	SelfType Reciprocal() const
 	{
 		return MInverse();
 	}
 	/**Make this into its multiplication inverse.
 	\return A reference to this.*/
-	SelfType& MakeRecipricol()
+	SelfType& MakeReciprocal()
 	{
 		std::swap(m_num, m_den);
 		return *this;
@@ -195,7 +189,7 @@ public:
 	SelfType& operator *=(const SelfType& other)
 	{
 #if _DEBUG
-		std::cout << "\noperator *= called, will take bit extra time.";
+		std::cout << "\noperator *= called, will take bit extra time for big ints.";
 #endif
 		m_num *= other.m_num;
 		m_den *= other.m_den;
@@ -205,7 +199,7 @@ public:
 	}
 	SelfType& operator /=(const SelfType& other)
 	{
-		return *this *= other.Recipricol();
+		return *this *= other.Reciprocal();
 	}
 	SelfType  operator + (const SelfType& other)const
 	{
@@ -257,14 +251,14 @@ public:
 	bool operator<(const SelfType& other) const
 	{
 #if _DEBUG
-		std::cout << "\noperator< called, will take bit extra time.";
+		std::cout << "\noperator< called, will take bit extra time for big ints.";
 #endif
 		return (m_num * other.m_den) < (m_den * other.m_num);
 	}
 	bool operator<=(const SelfType& other) const
 	{
 #if _DEBUG
-		std::cout << "\noperator<= called, will take bit extra time.";
+		std::cout << "\noperator<= called, will take bit extra time for big ints.";
 #endif
 		return (m_num * other.m_den) <= (m_den * other.m_num);
 	}
@@ -279,7 +273,7 @@ public:
 	bool operator==(const SelfType& other) const
 	{
 #if _DEBUG
-		std::cout << "\noperator== called, will take bit extra time.";
+		std::cout << "\noperator== called, will take bit extra time for big ints.";
 #endif
 		return (m_num * other.m_den) == (m_den * other.m_num);
 	}
@@ -305,7 +299,7 @@ public:
 	bool ScaleDown(const T& val)
 	{
 #if _DEBUG
-		std::cout << "\nScaleDown called, will take much extra time.";
+		std::cout << "\nScaleDown called, will take much extra time for big ints.";
 #endif
 		bool numMult = m_num % val == 0;
 		bool denMult = m_den % val == 0;
@@ -320,6 +314,8 @@ public:
 	void AutoSimp(bool set)
 	{
 		cg::SetFlag(m_opt, OptRational::AutoSimplify, set);
+		if(set)
+		Simplify();
 	}
 	/**Determine if auto simp is on or off.
 	\return True if auto Simp is ON, and false if it is OFF.*/
@@ -331,7 +327,7 @@ public:
 	void Simplify()
 	{
 #if _DEBUG
-		std::cout << "\nSimplify called, will take much extra time (b/c GCD).";
+		std::cout << "\nSimplify called, will take much extra time for big ints (b/c GCD).";
 #endif
 		if (m_num < 0 && m_den < 0)
 		{
@@ -351,7 +347,9 @@ public:
 	template<typename R>
 	R Eval()
 	{
-		return R(m_num) / m_den;
+		R x(m_num);
+		x /= m_den;
+		return x;
 	}
 protected:
 	/**Set the parts.
@@ -360,7 +358,7 @@ protected:
 	void Set(const T& n, const T& d)
 	{
 		if (d == 0)
-			throw std::invalid_argument("The denominator cannot be zero.");
+			throw std::invalid_argument("The denominator cannot be zero for big ints.");
 		m_num = n;
 		m_den = d;
 	}
@@ -374,5 +372,7 @@ protected:
 
 using Rational64 = RationalImpl<int64_t>;
 template class RationalImpl<int64_t>;
+using Rational = RationalImpl<std::ptrdiff_t>;
+template class RationalImpl<std::ptrdiff_t>;
 
 }

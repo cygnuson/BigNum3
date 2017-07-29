@@ -34,17 +34,15 @@ private:
 	cg::List<int, UseStack ? 100 : 0> m_points;
 };
 
+#include "Rational.hpp"
+
 int main(int argc, char ** argv)
 {
-	cg::List<int, 30> stackList; //Allocated on the stack, will not resize.
-	int i = 0;
-	while (i < 25)
-		stackList.PushBack(i++); //add 25 items to the list.
-	for (std::size_t i = 0; i < stackList.Size(); ++i)
-	{
-		std::cout << stackList[i] << ", ";
-		//std::cout << stackList.Get(i++) << ", ";   //also works the same.
-	}
+	auto r = cg::Rational::Make(0.444329, 9);
+	auto a = r.MInverse();
+	r.AutoSimp(true);
+
+	auto X = r.Eval<double>();
 
 	int stop = 0;
 	return stop;

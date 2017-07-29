@@ -1,0 +1,107 @@
+\documentclass{article}
+\usepackage{fancyhdr}
+%for headers
+\usepackage{textcomp}
+%for angles
+\usepackage{listings}
+%for code listing
+\usepackage{xcolor}
+%for highlighting
+\usepackage{caption}
+\usepackage{calc}
+%for code boxes
+\usepackage{varioref}
+%for fancey references
+\usepackage{fancyvrb}
+%for fancey Verbs
+
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{%
+	\parbox{\textwidth}{\colorbox{gray}{\parbox{\textwidth}{#1#2#3}}\vskip-4pt}}
+\newlength\tdima \newlength\tdimb \setlength\tdima{ \fboxsep+\fboxrule} \setlength\tdimb{-\fboxsep+\fboxrule}
+
+\renewcommand\lstlistingname{Example}
+
+
+\newcommand{\theobj}{\protect\Verb+StaticPower +}
+\newcommand{\thedocname}{The \theobj Class}
+\rhead{\hfill {\thedocname}}
+\pagestyle{fancy}
+\cfoot{\thedocname :\quad Page \thepage}
+
+\begin{document}
+
+\tableofcontents
+
+
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{codetext}{rgb}{0.7,0.7,0.7}
+\definecolor{backcolour}{rgb}{0.8,0.8,0.8}
+
+\lstdefinestyle{cppstyle}{
+	frame=tlrb,
+	xleftmargin=\tdima,
+	xrightmargin=\tdimb,
+	backgroundcolor=\color{backcolour},
+	commentstyle=\color{codegreen}\ttfamily,
+	keywordstyle=\color{blue}\ttfamily,
+	numberstyle=\scriptsize\color{codegray},
+	stringstyle=\color{red}\ttfamily,
+	basicstyle=\footnotesize\ttfamily,
+	breakatwhitespace=false,         
+	breaklines=true,                  
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
+}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white}
+\lstset{style=cppstyle}
+
+\section{The \theobj Class}
+
+The \theobj Class is for computing powers statically at compile time.
+
+\subsection{Using \theobj}
+
+To use it, simple call it statically with the appropriate parameter.
+
+\begin{lstlisting}[language=C++, label=code:1, caption=Calculating at compiletime with \theobj]
+auto X = cg::StaticPower<2,16>::value; //X == 65536
+\end{lstlisting}
+
+\paragraph{Why?} \hfil \\
+This is useful for classes that have restrictions on their size (at compile time) to a power of something.
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
