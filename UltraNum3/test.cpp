@@ -1,7 +1,7 @@
 
 #include <utility>
 
-#include "Num.hpp"
+#include "BigNum.hpp"
 #include "List.hpp"
 
 const uint16_t& testfunc(const uint16_t& t)
@@ -36,13 +36,18 @@ private:
 
 #include "Rational.hpp"
 
-int main(int argc, char ** argv)
+int main()
 {
-	auto r = cg::Rational::Make(0.444329, 9);
-	auto a = r.MInverse();
-	r.AutoSimp(true);
+	uint16_t a = 4;
+	uint16_t b = 5;
 
-	auto X = r.Eval<double>();
+
+	cg::BigNum<uint16_t&, 2> n(a, b);
+	auto beg = n.Begin();
+	auto end = n.End();
+	a = 6;
+	for (; beg != end; ++beg)
+		std::cout << beg->Get(0) << ", ";
 
 	int stop = 0;
 	return stop;

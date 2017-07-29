@@ -62,7 +62,7 @@ public:
 		:m_cap(std::move(other.m_cap)), m_size(std::move(other.m_size))
 	{
 		for (std::size_t i = 0; i < other.m_size; ++i)
-			new (m_data + i) DataType(std::move(other.m_data[i]));
+			new (Addr() + i) DataType(std::move(other.Addr()[i]));
 	};
 	/**Create the int with initial values.
 
@@ -78,7 +78,7 @@ public:
 	{
 		std::size_t smaller = vals.size() < SizeP ? vals.size() : SizeP;
 		for (std::size_t i = 0; i < smaller; ++i)
-			new (&m_data[i]) DataType(std::move(*(vals.begin() + i)));
+			new (Addr() + i) DataType(std::move(*(vals.begin() + i)));
 		m_size = smaller;
 	}
 	/**Determine if another element can be inserted.
@@ -99,9 +99,9 @@ public:
 		if (m_size == m_cap)
 			throw std::runtime_error("The list is full.");
 		if (m_size != i)
-			std::memmove(m_data + i + 1, m_data + i,
+			std::memmove(Addr() + i + 1, Addr() + i,
 				sizeof(T)*(m_cap - m_size));
-		new (&m_data[i])T(o);
+		new (Addr() + i)T(o);
 		++m_size;
 	}
 	/**Push an object to an index.
@@ -114,9 +114,9 @@ public:
 		if (m_size == m_cap)
 			throw std::runtime_error("The list is full.");
 		if (m_size != i)
-			std::memmove(m_data + i + 1, m_data + i,
+			std::memmove(Addr() + i + 1, Addr() + i,
 				sizeof(T)*(m_cap - m_size));
-		new (&m_data[i])T(o);
+		new (Addr() + i)T(o);
 		++m_size;
 	}
 	/**Push an object to an index.
@@ -129,9 +129,9 @@ public:
 		if (m_size == m_cap)
 			throw std::runtime_error("The list is full.");
 		if (m_size != i)
-			std::memmove(m_data + i + 1, m_data + i,
+			std::memmove(Addr() + i + 1, Addr() + i,
 				sizeof(T)*(m_size - i));
-		new (&m_data[i])T(std::forward<T>(o));
+		new (Addr() + i)T(std::forward<T>(o));
 		++m_size;
 	}
 	/**Emplace an object to an index.
@@ -145,23 +145,36 @@ public:
 		if (m_size == m_cap)
 			throw std::runtime_error("The list is full.");
 		if (m_size != i)
-			std::memmove(m_data + i + 1, m_data + i,
+			std::memmove(Addr() + i + 1, Addr() + i,
 				sizeof(T)*(m_size - i));
-		new (&m_data[i])T(std::forward<Ts>(nums)...);
+		new (Addr() + i)T(std::forward<Ts>(nums)...);
 		++m_size;
 	}
 protected:
+	/**Get the address of the data.
+	\return The address of the data.*/
+	DataType* Addr()
+	{
+		return (DataType*)m_data;
+	}
+	/**Get the address of the data.
+	\return The address of the data.*/
+	const DataType* Addr()const
+	{
+		return (const DataType*)m_data;
+	}
 	/**Stop copying*/
 	Storage(const SelfType&) = delete;
 	/**Stop copying*/
 	void operator=(const SelfType&) = delete;
-	/**The storage area.*/
-	DataType m_data[MaxSize];
 	/**The maximum capacity of the storage*/
 	std::size_t m_cap;
 	/**The size of used up slots*/
 	std::size_t m_size;
-
+private:
+	/**The storage area.  Units of char so that the values are not initialized.
+	*/
+	char m_data[MaxSize * sizeof(T)];
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -214,7 +227,7 @@ public:
 		std::size_t sz = vals.size();
 		ExpandTo(sz);
 		for (std::size_t i = 0; i < sz; ++i)
-			new (&m_data[i]) DataType(std::move(*(vals.begin() + i)));
+			new (Addr() + i) DataType(std::move(*(vals.begin() + i)));
 		m_size = sz;
 		m_cap = sz;
 	}
@@ -249,9 +262,9 @@ public:
 		if (m_size == m_cap)
 			ExpandTo(m_cap + ExpandAmount);
 		if (m_size != i)
-			std::memmove(m_data + i + 1, m_data + i,
+			std::memmove(Addr() + i + 1, Addr() + i,
 				sizeof(T)*(m_cap - m_size));
-		new (&m_data[i])T(o);
+		new (Addr() + i)T(o);
 		++m_size;
 	}
 	/**Push an object to an index.
@@ -264,9 +277,9 @@ public:
 		if (m_size == m_cap)
 			ExpandTo(m_cap + ExpandAmount);
 		if (m_size != i)
-			std::memmove(m_data + i + 1, m_data + i,
+			std::memmove(Addr() + i + 1, Addr() + i,
 				sizeof(T)*(m_cap - m_size));
-		new (&m_data[i])T(o);
+		new (Addr() + i)T(o);
 		++m_size;
 	}
 	/**Push an object to an index.
@@ -279,9 +292,9 @@ public:
 		if (m_size == m_cap)
 			ExpandTo(m_cap + ExpandAmount);
 		if (m_size != i)
-			std::memmove(m_data + i + 1, m_data + i,
+			std::memmove(Addr() + i + 1, Addr() + i,
 				sizeof(T)*(m_size - i));
-		new (&m_data[i])T(std::forward<T>(o));
+		new (Addr() + i)T(std::forward<T>(o));
 		++m_size;
 	}
 	/**Emplace an object to an index.
@@ -295,18 +308,19 @@ public:
 		if (m_size == m_cap)
 			ExpandTo(m_cap + ExpandAmount);
 		if (m_size != i)
-			std::memmove(m_data + i + 1, m_data + i,
+			std::memmove(Addr() + i + 1, Addr() + i,
 				sizeof(T)*(m_size - i));
-		new (&m_data[i])T(std::forward<Ts>(nums)...);
+		new (Addr() + i)T(std::forward<Ts>(nums)...);
 		++m_size;
 	}
+private:
+	/**The storage area.*/
+	DataType* m_data;
 protected:
 	/**Stop copying*/
 	Storage(const SelfType&) = delete;
 	/**Stop copying*/
 	void operator=(const SelfType&) = delete;
-	/**The storage area.*/
-	DataType* m_data;
 	/**The maximum capacity of the storage*/
 	std::size_t m_cap;
 	/**The size of used up slots*/
@@ -326,11 +340,23 @@ protected:
 		}
 		/**Dont initialize...*/
 		T* nData = (T*) std::malloc(sizeof(T)*amt);
-		std::memmove(nData, m_data, sizeof(T) * m_size);
+		std::memmove(nData, Addr(), sizeof(T) * m_size);
 		m_cap = amt;
 
 		delete m_data;
 		m_data = nData;
+	}
+	/**Get the address of the data.
+	\return The address of the data.*/
+	DataType* Addr()
+	{
+		return m_data;
+	}
+	/**Get the address of the data.
+	\return The address of the data.*/
+	const DataType* Addr()const
+	{
+		return m_data;
 	}
 };
 
@@ -400,7 +426,7 @@ public:
 	void FillUnused(const DataType& x)
 	{
 		for (std::size_t i = m_size; i < m_cap; ++i)
-			new (&m_data[i])T(x);
+			new (Begin() + i)T(x);
 	}
 	/**Push a value, and its `x` amount of increments. Ex: (a,3) will push
 	a, a+1, a+2, to the list. There will be `x` amount of insertions.
@@ -468,7 +494,7 @@ public:
 	{
 		if (i > m_size)
 			throw std::invalid_argument("The index is out of bounds.");
-		return m_data[i];
+		return Addr()[i];
 	}
 	/**Get an element without any dereference layer.
 	\param i The index to get.
@@ -477,7 +503,7 @@ public:
 	{
 		if (i >= m_size)
 			throw std::invalid_argument("The index is out of bounds.");
-		return m_data[i];
+		return Addr()[i];
 	}
 	/**Get an element.
 	\param i The index to get.
@@ -486,7 +512,7 @@ public:
 	{
 		if (i > m_size)
 			throw std::invalid_argument("The index is out of bounds.");
-		return m_data[i];
+		return Get(i);
 	}
 	/**Get an element.
 	\param i The index to get.
@@ -495,31 +521,31 @@ public:
 	{
 		if (i >= m_size)
 			throw std::invalid_argument("The index is out of bounds.");
-		return m_data[i];
+		return Get(i);
 	}
 	/**Get the begin iterator.
 	\return An iterator to the front of the list.*/
 	T* Begin()
 	{
-		return m_data;
+		return Addr();
 	}
 	/**Get the begin iterator.
 	\return An iterator to the front of the list.*/
 	const T* Begin() const
 	{
-		return m_data;
+		return Addr();
 	}
 	/**Get an iterator to the end+1 of the list.
 	\return An iterator to End+1*/
 	T* End()
 	{
-		return m_data + m_size;
+		return Addr() + m_size;
 	}
 	/**Get an iterator to the end+1 of the list.
 	\return An iterator to End+1*/
 	const T* End() const
 	{
-		return m_data + m_size;
+		return Addr() + m_size;
 	}
 	/**Erase a unit from the storage.
 	\param i The index to erase.*/
@@ -538,7 +564,7 @@ public:
 	\param s The amount to erase in elements.*/
 	void Erase(std::size_t i, std::size_t s)
 	{
-		std::memmove(m_data + i, m_data + i + s,
+		std::memmove(Addr() + i, Addr() + i + s,
 			(m_size - (i + s)) * sizeof(T));
 		m_size -= s;
 	}
@@ -578,7 +604,7 @@ public:
 		SelfType copy;
 		copy.m_cap = m_cap;
 		copy.m_size = m_size;
-		std::memcpy(copy.m_data, m_data, m_size * sizeof(T));
+		std::memcpy(copy.Addr(), Addr(), m_size * sizeof(T));
 		return copy;
 	}
 	/**Determine the total cap of the list.

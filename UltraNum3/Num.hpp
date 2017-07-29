@@ -79,8 +79,13 @@ public:
 	using Self = Num<_Internal_T>;
 	/**The demoted type.*/
 	using DemotedBaseType = typename cg::DemoteType<BasicStoreType>::Type;
+	///////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////CONSTRUCTORS HERE//
+	///////////////////////////////////////////////////////////////////////////
+	/*Default*/
+	Num() {}
 	/**Create the num storage with a reference.*/
-	Num(_Internal_T&& num = 0)
+	Num(_Internal_T&& num)
 		:m_data(std::forward<_Internal_T>(num)) {}
 	/**Copy ctor
 	\param other The other thing to copy.*/

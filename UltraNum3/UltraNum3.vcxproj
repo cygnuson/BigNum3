@@ -117,6 +117,7 @@
   <ItemGroup>
     <ClInclude Include="Endian.hpp" />
     <ClInclude Include="Helpers.hpp" />
+    <ClInclude Include="BigNum.hpp" />
     <ClInclude Include="List.hpp" />
     <ClInclude Include="Num.hpp" />
     <ClInclude Include="Power.hpp" />
