@@ -122,7 +122,7 @@ public:
 	/**Direct access to the data.
 	\param i A compatibility param. Must be 1.
 	\return The data as a T&.*/
-	BasicStoreType& Get(std::size_t i = 0)
+	BasicStoreType& Get(std::size_t i)
 	{
 		if (i != 0)
 			throw std::invalid_argument("Paramter out of bounds.");
@@ -131,29 +131,29 @@ public:
 	/**Direct access to the data.
 	\param i A compatibility param. Must be 1.
 	\return The data as a T&.*/
-	const BasicStoreType& Get(std::size_t i = 0) const
+	const BasicStoreType& Get(std::size_t i) const
 	{
 		if (i != 0)
 			throw std::invalid_argument("Paramter out of bounds.");
 		return m_data;
 	}
 	/**Get an element.
-	\param i A compatibility param. Must be 1.
+	\param i A compatibility param. Must be 0.
 	\return The data as a T&.*/
 	auto& operator[](std::size_t i)
 	{
 		if (i != 0)
 			throw std::invalid_argument("Paramter out of bounds.");
-		return Get();
+		return Get(i);
 	}
 	/**Get an element.
-	\param i A compatibility param. Must be 1.
+	\param i A compatibility param. Must be 0.
 	\return The data as a T&.*/
 	const auto& operator[](std::size_t i) const
 	{
 		if (i != 0)
 			throw std::invalid_argument("Paramter out of bounds.");
-		return Get();
+		return Get(i);
 	}
 	///////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////UTILITIES HERE//
@@ -188,7 +188,7 @@ public:
 	\return True if this is zero.*/
 	bool IsZero() const
 	{
-		return Get() == 0;
+		return Get(0) == 0;
 	}
 	/**Create a copy of this thing that cuts all reference.
 	\return A copy of the object with copied data and no references.*/

@@ -52,7 +52,7 @@ public:
 	/**The max size.*/
 	const static std::size_t MaxSize = SizeP;
 	/**default ctor*/
-	Storage(std::size_t) :m_cap(SizeP), m_size(0)
+	Storage(std::size_t = 8) :m_cap(SizeP), m_size(0)
 	{
 
 	};
@@ -94,6 +94,8 @@ public:
 	\param o The thing to push.*/
 	void Insert(std::size_t i, const T& o)
 	{
+		if (i > m_size)
+			throw std::runtime_error("Index out of bounds.");
 		if (m_size == m_cap)
 			throw std::runtime_error("The list is full.");
 		if (m_size != i)
@@ -107,6 +109,8 @@ public:
 	\param o The thing to push.*/
 	void Insert(std::size_t i, T& o)
 	{
+		if (i > m_size)
+			throw std::runtime_error("Index out of bounds.");
 		if (m_size == m_cap)
 			throw std::runtime_error("The list is full.");
 		if (m_size != i)
@@ -120,12 +124,30 @@ public:
 	\param o The thing to push.*/
 	void Insert(std::size_t i, T&& o)
 	{
+		if (i > m_size)
+			throw std::runtime_error("Index out of bounds.");
 		if (m_size == m_cap)
 			throw std::runtime_error("The list is full.");
 		if (m_size != i)
 			std::memmove(m_data + i + 1, m_data + i,
 				sizeof(T)*(m_size - i));
-		new (&m_data[i])T(std::move(o));
+		new (&m_data[i])T(std::forward<T>(o));
+		++m_size;
+	}
+	/**Emplace an object to an index.
+	\param i The place to put the object.
+	\param nums The args to send to the ctor of type T.*/
+	template<typename...Ts>
+	void Emplace(std::size_t i, Ts&&... nums)
+	{
+		if (i > m_size)
+			throw std::runtime_error("Index out of bounds.");
+		if (m_size == m_cap)
+			throw std::runtime_error("The list is full.");
+		if (m_size != i)
+			std::memmove(m_data + i + 1, m_data + i,
+				sizeof(T)*(m_size - i));
+		new (&m_data[i])T(std::forward<Ts>(nums)...);
 		++m_size;
 	}
 protected:
@@ -222,6 +244,8 @@ public:
 	\param o The thing to push.*/
 	void Insert(std::size_t i, const T& o)
 	{
+		if (i > m_size)
+			throw std::runtime_error("Index out of bounds.");
 		if (m_size == m_cap)
 			ExpandTo(m_cap + ExpandAmount);
 		if (m_size != i)
@@ -235,6 +259,8 @@ public:
 	\param o The thing to push.*/
 	void Insert(std::size_t i, T& o)
 	{
+		if (i > m_size)
+			throw std::runtime_error("Index out of bounds.");
 		if (m_size == m_cap)
 			ExpandTo(m_cap + ExpandAmount);
 		if (m_size != i)
@@ -248,12 +274,30 @@ public:
 	\param o The thing to push.*/
 	void Insert(std::size_t i, T&& o)
 	{
+		if (i > m_size)
+			throw std::runtime_error("Index out of bounds.");
 		if (m_size == m_cap)
 			ExpandTo(m_cap + ExpandAmount);
 		if (m_size != i)
 			std::memmove(m_data + i + 1, m_data + i,
 				sizeof(T)*(m_size - i));
-		new (&m_data[i])T(std::move(o));
+		new (&m_data[i])T(std::forward<T>(o));
+		++m_size;
+	}
+	/**Emplace an object to an index.
+	\param i The place to put the object.
+	\param nums The args to send to the ctor of type T.*/
+	template<typename...Ts>
+	void Emplace(std::size_t i, Ts&&... nums)
+	{
+		if (i > m_size)
+			throw std::runtime_error("Index out of bounds.");
+		if (m_size == m_cap)
+			ExpandTo(m_cap + ExpandAmount);
+		if (m_size != i)
+			std::memmove(m_data + i + 1, m_data + i,
+				sizeof(T)*(m_size - i));
+		new (&m_data[i])T(std::forward<Ts>(nums)...);
 		++m_size;
 	}
 protected:
@@ -307,7 +351,9 @@ public:
 	/**Create the list.
 	\param initCap The initial capacity to start with.  Not relevent for
 	SizeP > 0.*/
-	List(std::size_t initCap = 8) : Storage(initCap) {};
+	List(std::size_t initCap) : Storage(initCap) {};
+	/**Create the list with cap of 8.*/
+	List() : Storage(8) {};
 	/**Move ctor
 	\param other The thing to move.*/
 	List(SelfType&& other)
@@ -343,7 +389,7 @@ public:
 	\param size The amount of units starting with `beg`.*/
 	List(DataType* beg, std::size_t size)
 	{
-		if (sz == 0)
+		if (size == 0)
 			throw std::invalid_argument("The size is zero.");
 		for (std::size_t i = 0; i < size; ++i)
 			PushBack(*(beg + i));
@@ -382,6 +428,20 @@ public:
 	void PushBack(T& o)
 	{
 		Insert(m_size, o);
+	}
+	/**Emplace an object to the back of the list.
+	\param o The object.*/
+	template<typename...Ts>
+	void EmplaceBack(Ts&&... o)
+	{
+		Emplace(m_size, std::forward<Ts>(o)...);
+	}
+	/**Emplace an object to the back of the list.
+	\param o The object.*/
+	template<typename...Ts>
+	void EmplaceFront(Ts&&... o)
+	{
+		Emplace(0, std::forward<Ts>(o)...);
 	}
 	/**Push an object to the back of the list.
 	\param o The object.*/
@@ -465,8 +525,13 @@ public:
 	\param i The index to erase.*/
 	void Erase(std::size_t i)
 	{
-		std::memmove(m_data + i, m_data + i + 1, (m_size - (i+1)) * sizeof(T));
-		--m_size;
+		Erase(i, 1);
+	}
+	/**Erase a unit from the storage.
+	\param i The index to erase.*/
+	void Pop(std::size_t i)
+	{
+		Erase(i);
 	}
 	/**Erase a unit from the storage.
 	\param i The index to erase.
@@ -476,6 +541,13 @@ public:
 		std::memmove(m_data + i, m_data + i + s,
 			(m_size - (i + s)) * sizeof(T));
 		m_size -= s;
+	}
+	/**Erase a unit from the storage.
+	\param i The index to erase.
+	\param s The amount to erase in elements.*/
+	void Pop(std::size_t i, std::size_t s)
+	{
+		Erase(i, s);
 	}
 	/**Pop off the last element.*/
 	void PopBack()
@@ -517,5 +589,7 @@ public:
 	}
 };
 
+template class List<int, 0>;
+template class List<int, 1>;
 
 }

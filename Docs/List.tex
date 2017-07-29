@@ -71,11 +71,10 @@ The \theobj class is an object that may be heap allocated or stack allocated.  I
 \subsection{The Basic Function of \theobj}
 
 
-\begin{lstlisting}[language=C++, label=code:1, caption=Demoting types]
+\begin{lstlisting}[language=C++, label=code:1, caption=The \theobj Class]
 
 List<int, 0> heapList;   //Allocated on the heap, auto resizes.
 List<int, 30> stackList; //Allocated on the stack, will not resize.
-
 template<bool UseStack>
 class Points
 {
@@ -84,13 +83,11 @@ public:
 private:
 	cg::List<int, UseStack ? 100 : 0> m_points;
 };
-
 ...
 /*Reguardless of the location of the data, the list is used in exactly the same way, with exactly the same code.*/
 Points<false> m_slowPoints; //Slow heap based data
 Points<true> m_fastPoints;  //Fast stack data
 ...
-
 \end{lstlisting}
 
 The \theobj Class, when stack allocated, will keep track of how many units of its array are used.  It works exactly the same way as a heap list except that it has a max capacity, which is its \Verb+std::size_t+ parameter.  When the max capacity is hit, it will throw a \Verb+std::runtime_error+.  See the following section on how to use the \theobj interchangeably with stack and heap mode.
@@ -100,7 +97,91 @@ A developer may wish to have a single class that can be used for both stack base
 
 \subsection{Using \theobj}
 
-Member functions are provided to access the list in a way that it mey be stack or heap based without changing any operating code (except for the template parameter that determines the location of data).
+Member functions are provided to access the list in a way that it mey be stack or heap based without changing any operating code except for the template parameter where 0 means heap allocated and !0 means stack allocated of that size..
+
+\subsection{The Size of \theobj}
+
+To determine the size or max size of the list, use the following members (Example \vref{code:2}).
+
+
+\begin{lstlisting}[language=C++, label=code:2, caption=Determining the Size of a list.]
+cg::List<int, 0> heapList;   //Allocated on the heap, auto resizes.
+cg::List<int, 30> stackList; //Allocated on the stack, will not resize.
+auto hlSize = heapList.Size(); //Get the amount of elements in heapList.
+auto slSize = stackList.Size();//Geth the amount of elements in the stackList.  May be  the size of the template paramter or less.
+auto hlMax = heapList.MaxSize(); //Will be the max size of std::size_t.
+auto slMax = stackList.MaxSize();// will be the template parameter (30 in this example).
+\end{lstlisting}
+
+Its important to note that the \Verb+MaxSize()+ of a stack list will always be the value of the template parameter and that \Verb+Size()+ need not be exactly \Verb+MaxSize()+ but it may be. Consider the following Example \vref{code:3}.
+
+
+\begin{lstlisting}[language=C++, label=code:2, caption=Size() and MaxSize() of stackList]
+
+cg::List<int, 30> stackList; //Allocated on the stack, will not resize.
+auto slSize = stackList.Size();//Geth the amount of elements in the stackList.  May be  the size of the template paramter or less.
+auto slMax = stackList.MaxSize();// will be the template parameter (30 in this example).
+int i = 0;
+while(i < 25)
+	stackList.PushBack(i++);
+slSize = stackList.Size(); //slSize is now 25.
+slMax = stackList.MaxSize();// slMax is still 30.
+
+\end{lstlisting}
+\pagebreak
+\subsection{Accessing the \theobj}
+
+There are multiple ways to access the list. An iterator (raw ptr), \Verb+operator[]+, and \Verb+Get()+ functions.
+
+
+\begin{lstlisting}[language=C++, label=code:2, caption=Accessing via iterators]
+cg::List<int, 30> stackList; //Allocated on the stack, will not resize.
+int i = 0;
+while (i < 25)
+	stackList.PushBack(i++); //add 25 items to the list.
+auto beg = stackList.Begin();
+auto end = stackList.End();  //The end poitner is one past the end of the size, and not the max sie.
+for (; beg != end; ++beg)    //prints 0, 1, 2, ... , 23, 24
+	std::cout << *beg << ", ";
+\end{lstlisting}
+
+One might thing that the \Verb+End()+ function might point to the end of the allocated space (index 31 with the previous example) but thats not the case.  The \Verb+End()+ function actually returns a pointer to one-past-the-end of the last element actually \textit{placed} into the list (for the previous example, \Verb+Begin()+ + \Verb+Size()+ is the effective pointer). There is also a \Verb+operator[]+, and \Verb+Get()+ function.
+
+\begin{lstlisting}[language=C++, label=code:2, caption=Accessing via Get() and square bracket operator]
+cg::List<int, 30> stackList; //Allocated on the stack, will not resize.
+int i = 0;
+while (i < 25)
+	stackList.PushBack(i++); //add 25 items to the list.
+for (std::size_t i = 0; i < stackList.Size(); ++i)
+{
+	std::cout << stackList[i] << ", ";
+	//std::cout << stackList.Get(i) << ", ";   //also works the same.
+}
+\end{lstlisting}
+
+\pagebreak
+\subsection{Altering the \theobj}
+
+There are a few ways to erase elements off the list.
+
+\begin{lstlisting}[language=C++, label=code:2, caption=Erasing items]
+cg::List<int, 30> stackList; //Allocated on the stack, will not resize.
+int i = 0;
+while (i < 25)
+	stackList.PushBack(i++); //add 25 items to the list.
+stackList.PopBack();    //Pop off the back item
+stackList.PopFront();   //Pop off the front item
+stackList.Erase(3);     //Pop off the item at index 3
+stackList.Erase(5,2);   //Pop off 2 items starting at and including index 5
+stackList.Pop(7);       //Pop off the item at index 7
+stackList.Pop(7,6);     //Pop off 6 items starting at and including index 7
+for (std::size_t i = 0; i < stackList.Size(); ++i)
+{
+	std::cout << stackList[i] << ", ";
+}
+\end{lstlisting}
+
+Note that there are functions \Verb+Pop(index, amt) and Erase(index, amt)+ that do the same thing.
 
 \end{document}
 
