@@ -43,9 +43,10 @@ int main()
 
 
 	cg::BigNum<uint16_t&, 2> n(a, b);
+	a = 6;
+	n.Hi().Get(0) = 99;
 	auto beg = n.Begin();
 	auto end = n.End();
-	a = 6;
 	for (; beg != end; ++beg)
 		std::cout << beg->Get(0) << ", ";
 
