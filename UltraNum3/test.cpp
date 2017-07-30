@@ -40,15 +40,25 @@ int main()
 {
 	uint16_t a = 4;
 	uint16_t b = 5;
+	uint16_t c = 6;
+	uint16_t d = 7;
 
 
-	cg::BigNum<uint16_t&, 2> n(a, b);
-	a = 6;
-	n.Hi().Get(0) = 99;
+	cg::BigNum<uint16_t&, 4> n(a, b, c, d);
+	a = 11;
+	b = 55;
+	auto X = cg::Hi(n);
+	X.Get(0).Get(0) = 88;
+	X.Get(1).Get(0) = 33;
 	auto beg = n.Begin();
 	auto end = n.End();
 	for (; beg != end; ++beg)
 		std::cout << beg->Get(0) << ", ";
+
+	uint16_t someInt = 257;
+	cg::Num<uint16_t&> in(someInt);
+	auto G = cg::Hi(in);
+	G.Get(0) = 0;
 
 	int stop = 0;
 	return stop;

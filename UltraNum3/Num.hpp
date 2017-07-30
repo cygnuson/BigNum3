@@ -66,8 +66,7 @@ public:
 		_Internal_T
 	>;
 	/**The basic type without any ref, ptr, or const.*/
-	using BasicStoreType
-		= std::remove_const_t<std::remove_reference_t<StoreType>>;
+	using BasicStoreType = std::decay_t<_Internal_T>;
 	/**Make sure the Num is a reference type.*/
 	static_assert(std::is_reference<_Internal_T>::value,
 		"Type T must be a reference type.");
@@ -170,6 +169,12 @@ public:
 	{
 		return RefSelf(m_data);
 	}
+	/**Get a reference to the internal data of this object.
+	\return A modifiable reference to the data of this object.*/
+	NonRefSelf GetReference() const
+	{
+		return NonRefSelf(m_data);
+	}
 
 	/**Set the value of the data.
 	\param n The number to set.*/
@@ -211,10 +216,9 @@ public:
 		other.m_data = t;
 	}
 
-	///////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////SPLITTERS HERE//
-	///////////////////////////////////////////////////////////////////////////
-
+private:
+	/**Add the NumFriend for the Splitter access.*/
+	friend class NumFriend;
 	/**Get the upper part of the number.
 	\return A reference to the upper part of the number.*/
 	auto Hi()
@@ -259,8 +263,6 @@ public:
 			return Num<const DemotedBaseType&>
 			(*(((DemotedBaseType*)&m_data) + 1));
 	}
-
-private:
 	/**The internal data.*/
 	StoreType m_data;
 };
@@ -321,6 +323,82 @@ template<typename T, bool Ref>
 using NumType = std::conditional_t<Ref,
 	cg::Num<T&>,
 	cg::Num<const T&> >;
+
+/**Friender for the num.*/
+class NumFriend
+{
+public:
+
+	///////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////SPLITTERS HERE//
+	///////////////////////////////////////////////////////////////////////////
+
+	/**Get the hi part.
+	\param n The num for which to get the part.
+	\return the apropriate part of the num `n`.*/
+	template<typename T>
+	static auto Hi(Num<T>& n)
+	{
+		return n.Hi();
+	}
+	/**Get the hi part.
+	\param n The num for which to get the part.
+	\return the apropriate part of the num `n`.*/
+	template<typename T>
+	static auto Hi(const Num<T>& n)
+	{
+		return n.Hi();
+	}
+	/**Get the lo part.
+	\param n The num for which to get the part.
+	\return the apropriate part of the num `n`.*/
+	template<typename T>
+	static auto Lo(Num<T>& n)
+	{
+		return n.Lo();
+	}
+	/**Get the lo part.
+	\param n The num for which to get the part.
+	\return the apropriate part of the num `n`.*/
+	template<typename T>
+	static auto Lo(const Num<T>& n)
+	{
+		return n.Lo();
+	}
+};
+
+/**Get the hi part.
+\param n The num for which to get the part.
+\return the apropriate part of the num `n`.*/
+template<typename T>
+auto Hi(Num<T>& n)
+{
+	return NumFriend::Hi(n);
+}
+/**Get the hi part.
+\param n The num for which to get the part.
+\return the apropriate part of the num `n`.*/
+template<typename T>
+auto Hi(const Num<T>& n)
+{
+	return NumFriend::Hi(n);
+}
+/**Get the lo part.
+\param n The num for which to get the part.
+\return the apropriate part of the num `n`.*/
+template<typename T>
+auto Lo(Num<T>& n)
+{
+	return NumFriend::Lo(n);
+}
+/**Get the lo part.
+\param n The num for which to get the part.
+\return the apropriate part of the num `n`.*/
+template<typename T>
+auto Lo(const Num<T>& n)
+{
+	return NumFriend::Lo(n);
+}
 
 template class Num<const uint64_t&>;
 

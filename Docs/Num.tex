@@ -109,7 +109,7 @@ The first thing to know is the helper function \protect\Verb+cg::MakeNum+.  It w
 uint16_t n = 4;
 auto a = cg::MakeNum(n); //`a` is now REFERENCING `n`
 a.Set(89); //`a` REFERENCES `n` which now equals 89.
-bool check1 = a.Get() == 89; //true
+bool check1 = a.Get(0) == 89; //true
 check1 = n == 89; //true
 \end{lstlisting}
 
@@ -119,7 +119,7 @@ The \theobj Can also be used to create a regular wrapper that owns its own data 
 const uint16_t m = 4;
 auto b = cg::MakeNum(m); //`b` is now a COPY of `m`
 b.Set(89); //`b` does NOT reference `m`.
-bool check2 = b.Get() == 89; //true
+bool check2 = b.Get(0) == 89; //true
 check2 = m == 89; //false
 \end{lstlisting}
 
@@ -138,10 +138,10 @@ uint16_t n = 4;
 auto a = cg::MakeNum(n);       // a references n
 auto b = cg::MakeNum(a);       //b references a
 b.Set(89);                     //sets a,b, and n to 89.
-bool check = n == b.Get();     //true
-bool check2 = n == a.Get();    //true
-bool check3 = &n == &b.Get();  //true
-bool check4 = &n == &a.Get();  //true
+bool check = n == b.Get(0);     //true
+bool check2 = n == a.Get(0);    //true
+bool check3 = &n == &b.Get(0);  //true
+bool check4 = &n == &a.Get(0);  //true
 \end{lstlisting}
 \pagebreak
 A reference \theobj can be copied by another \theobj or it can be referenced by a reference \theobj. See Example \vref{code:5}.
@@ -151,10 +151,10 @@ uint16_t n = 4;
 auto a = cg::MakeNumC(n);      // a does not reference n
 auto b = cg::MakeNum(a);       //b references a
 b.Set(89);                     //sets a,b, to 89. n is unchanged.
-bool check = n == b.Get();     //false
-bool check2 = n == a.Get();    //false
-bool check3 = &n == &b.Get();  //false
-bool check4 = &n == &a.Get();  //false
+bool check = n == b.Get(0);     //false
+bool check2 = n == a.Get(0);    //false
+bool check3 = &n == &b.Get(0);  //false
+bool check4 = &n == &a.Get(0);  //false
 bool check4 
 	= &a.Get() == &b.Get();    //true
 \end{lstlisting}
@@ -190,19 +190,19 @@ cg::Num<decltype((b))> num2(b); //num copies b
 num.Set(5432);                  //set num AND a to the value.
 num2.Set(44);                   //sets num2 ONLY.
 bool check = a == 5432;         //true
-bool check2 = &a == &num.Get()  //true
+bool check2 = &a == &num.Get(0)  //true
 bool check3 = b == 44;          //false
-bool check4 = &b == &num2.Get() //false
+bool check4 = &b == &num2.Get(0) //false
 \end{lstlisting}
  \theobj may also be used as \Verb+decltype(testfunc(var))+ where the result of the function will be made to be the parameter of the constructor (see Example \vref{code:7}).
 \begin{lstlisting}[language=C++, label=code:7, caption=\theobj and function decyltype]
 uint16_t a = 888;                                 
 cg::Num<decltype(testfunc(a))> num(testfunc(a));  // num references a
-num.Get() = 5432;                                 // num == a == 5432
+num.Get(0) = 5432;                                 // num == a == 5432
                                                   
 const uint16_t b = 888;                           
 cg::Num<decltype(testfunc(b))> num2(testfunc(b)); // num2 copies b
-num2.Get() = 5432;                                // num2 == 5432, b == 888
+num2.Get(0) = 5432;                                // num2 == 5432, b == 888
 \end{lstlisting}
 
 \subsection{The \protect\Verb+cg::NumType<T,bool>+ Helper}
@@ -258,7 +258,7 @@ int main(int argc, char ** argv)
 	
 	auto sz = nums.size();
 	for (std::size_t i = 0; i < sz; ++i)
-		nums[i].Get() = i+1;
+		nums[i].Get(0) = i+1;
 
 	/*Result: (a to b) == (1 to 5)*/
 	return 0;
@@ -267,24 +267,23 @@ int main(int argc, char ** argv)
 \pagebreak
 \subsection{Splitters}
 
-The \theobj Has two regular, and two const splitter functions which will decompose the number into a HI and LO part. The const versions will produce copies of the hi and low parts, and the the non-const versions will produce reference \theobj objects of the HI and LO part.  The splitters use the \Verb+Endian+ and \Verb+DemoteType+ classes. Review those sections to truly understand the Hi and Lo system.
+There are helper functions \Verb+Hi()+ and \Verb+Lo()+ that will do the same thing.  The benefit of the helpers is that they are overloaded for multiple other types to make the use of \theobj and others objects such as \Verb+BigNum<T,S>+. See Example \vref{code:9c} and Example \vref{code:9d}.
 
-\begin{lstlisting}[language=C++, label=code:9, caption=Hi members]
+\begin{lstlisting}[language=C++, label=code:9c, caption=Hi members]
 uint16_t a = 256 + 5;            // a = 0000 0001 0000 0101
 cg::Num<decltype((a))> num(a);   //references a. If a was const, it would be a copy
-auto& X = num.Hi().Get();        //Store a reference to the HI part of num in X, also references the HI part of a (for this example).  If a was const, it would not reference the Hi part of a, only num
+auto& X = cg::Hi(num).Get(0);        //Store a reference to the HI part of num in X, also references the HI part of a (for this example).  If a was const, it would not reference the Hi part of a, only num
 X = 0;                           // would be compile error IF num was const.  If num 
-bool check = a == 5              //check a == 0000 0000 0000 0101 -- true
+bool check = a == 5;             //check a == 0000 0000 0000 0101 -- true
 \end{lstlisting}
 
-\begin{lstlisting}[language=C++, label=code:9, caption=Lo members]
-uint16_t a = 256 + 5;            // a = 0000 0001 0000 0101
-cg::Num<decltype((a))> num(a);   //references a. If a was const, it would be a copy
-auto& X = num.Lo().Get();        //Store a reference to the LO part of num in X, also references the Lo part of a (for this example).  If a was const, it would not reference the Lo part of a, only num
-X = 0;                           // would be compile error IF num was const.  If num 
-bool check = a == 256            //check a == 0000 0001 0000 0000 -- true
+\begin{lstlisting}[language=C++, label=code:9d, caption=Lo members]
+uint16_t y = 256 + 5;            // a = 0000 0001 0000 0101
+cg::Num<decltype((y))> num(y);   //references a. If a was const, it would be a copy
+auto& D = cg::Lo(num).Get(0);        //Store a reference to the LO part of num in X, also references the Lo part of a (for this example).  If a was const, it would not reference the Lo part of a, only num
+D = 0;                           // would be compile error IF num was const.  If num 
+bool check = a == 256;            //check a == 0000 0001 0000 0000 -- true
 \end{lstlisting}
-
 \pagebreak
 \subsection{Special Members of \theobj}
 

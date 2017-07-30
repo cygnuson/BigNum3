@@ -29,121 +29,11 @@ along with UltraNum2.  If not, see <http://www.gnu.org/licenses/>.
 namespace cg {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////SPLITTERS HERE/
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-template<typename _Internal_T, typename HalfType>
-class RegularSplitter
-{
-	/**The datatype as a Num<T> object.*/
-	using NumDataType = cg::Num<_Internal_T>;
-
-	/**True if this thing is const.*/
-	const static bool IAmConst = NumDataType::IAmConst;
-	/**The storage type.*/
-	using StoreType = typename NumDataType::StoreType;
-	/**The basic type without any ref, ptr, or const.*/
-	using BasicStoreType = typename NumDataType::BasicStoreType;
-	/**Make sure the Num is a reference type.*/
-	static_assert(std::is_reference<_Internal_T>::value,
-		"Type T must be a reference type.");
-protected:
-	/**The type of thing to be the result of a split.*/
-	using SplitterHalfType = HalfType;
-	/**The type of thing to be the result of a split.*/
-	using ConstSplitterHalfType = HalfType;
-	/**Get the hi position ofthe number.*
-	\return A reference or copy of the number depending on the constness or
-	reference status of this number.
-	\param first The first units to bein the halftype.
-	\param amt The amount of units in the halftype
-	(will do first + i, amt times)*/
-	SplitterHalfType Hi(NumDataType* first, std::size_t amt)
-	{
-		return SplitterHalfType(*first);
-	}
-};
-
-template<typename _Internal_T>
-class NumSplitter
-{
-	/**The datatype as a Num<T> object.*/
-	using NumDataType = cg::Num<_Internal_T>;
-
-	/**True if this thing is const.*/
-	const static bool IAmConst = NumDataType::IAmConst;
-	/**The storage type.*/
-	using StoreType = typename NumDataType::StoreType;
-	/**The basic type without any ref, ptr, or const.*/
-	using BasicStoreType = typename NumDataType::BasicStoreType;
-	/**Make sure the Num is a reference type.*/
-	static_assert(std::is_reference<_Internal_T>::value,
-		"Type T must be a reference type.");
-protected:
-	/**The type of thing to be the result of a split.*/
-	using SplitterHalfType = typename NumDataType::RefSelf;
-	/**The type of thing to be the result of a split.*/
-	using ConstSplitterHalfType = typename NumDataType::NonRefSelf;
-	/**Get the hi position ofthe number.*
-	\return A reference or copy of the number depending on the constness or
-	reference status of this number.
-	\param first The first units to bein the halftype.
-	\param amt The amount of units in the halftype
-	(will do first + i, amt times)*/
-	SplitterHalfType Hi(NumDataType* first, std::size_t amt)
-	{
-		return SplitterHalfType(first->Get(0));
-	}
-};
-
-template<typename _Internal_T, typename HalfType>
-class HeapSplitter
-{
-	/**The datatype as a Num<T> object.*/
-	using NumDataType = cg::Num<_Internal_T>;
-
-	/**True if this thing is const.*/
-	const static bool IAmConst = NumDataType::IAmConst;
-	/**The storage type.*/
-	using StoreType = typename NumDataType::StoreType;
-	/**The basic type without any ref, ptr, or const.*/
-	using BasicStoreType = typename NumDataType::BasicStoreType;
-	/**Make sure the Num is a reference type.*/
-	static_assert(std::is_reference<_Internal_T>::value,
-		"Type T must be a reference type.");
-protected:
-	/**The type of thing to be the result of a split.*/
-	using SplitterHalfType = HalfType;
-	/**The type of thing to be the result of a split.*/
-	using ConstSplitterHalfType = HalfType;
-	/**Get the hi position ofthe number.*
-	\return A reference or copy of the number depending on the constness or
-	reference status of this number.
-	\param first The first units to bein the halftype.
-	\param amt The amount of units in the halftype
-	(will do first + i, amt times)*/
-	SplitterHalfType Hi(NumDataType* first, std::size_t amt)
-	{
-		return SplitterHalfType(*first);
-	}
-};
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////INTIMPL HERE//////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<typename _Internal_T, std::size_t Units>
-class BigNum : protected std::conditional_t <
-	/*----*//*----*/Units == 0,
-	/*----*//*----*/HeapSplitter<_Internal_T, BigNum<_Internal_T, Units>>,
-	/*----*//*----*/std::conditional_t <
-	/*----*//*----*//*----*/Units == 2,
-	/*----*//*----*//*----*/NumSplitter<_Internal_T>,
-	/*----*//*----*//*----*/RegularSplitter<_Internal_T,
-	/*----*//*----*//*----*//*----*/BigNum<_Internal_T, Units / 2>
-	/*----*//*----*//*----*/>
-	/*----*//*----*/>
-	>
+class BigNum
 {
 public:
 	/**The datatype as a Num<T> object.*/
@@ -158,38 +48,39 @@ public:
 	/**Make sure the Num is a reference type.*/
 	static_assert(std::is_reference<_Internal_T>::value,
 		"Type T must be a reference type.");
+	/**Require even number of digits.*/
+	static_assert(Units % 2 == 0, "Must have even size.");
 	/**A self reference type.*/
 	using RefSelf = BigNum<std::remove_reference_t<StoreType>&, Units>;
 	/**A self reference type.*/
 	using NonRefSelf = BigNum<const std::remove_reference_t<StoreType>&, Units>;
 	/**A self reference type.*/
 	using Self = BigNum<_Internal_T, Units>;
-	/**The type of splitter.*/
-	using SplitterType = std::conditional_t <
-		/*----*//*----*/Units == 0,
-		/*----*//*----*/HeapSplitter<_Internal_T, BigNum<_Internal_T, Units>>,
-		/*----*//*----*/std::conditional_t <
-		/*----*//*----*//*----*/Units == 2,
-		/*----*//*----*//*----*/NumSplitter<_Internal_T>,
-		/*----*//*----*//*----*/RegularSplitter<_Internal_T,
-		/*----*//*----*//*----*//*----*/BigNum<_Internal_T, Units / 2>
-		/*----*//*----*//*----*/>
-		/*----*//*----*/>
-		>;
+
 	///////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////CONSTRUCTORS HERE
 	///////////////////////////////////////////////////////////////////////////
+
+	/**Create with a premade list.
+	\param l The list.*/
+	BigNum(cg::List<NumDataType, Units>&& l)
+		:m_data(std::move(l))
+	{
+
+	}
 	/**Default for empty number.*/
 	BigNum()
 	{
 
 	}
 	/**Create with a single num in the low spot.
-	\param t The number to emplace.*/
+	\param t The number to emplace.
+	\param t2 The second number to emplace.*/
 	template<typename T>
-	BigNum(T&& t)
+	BigNum(T&& t, T&& t2)
 	{
 		PushDigit(std::forward<T>(t));
+		PushDigit(std::forward<T>(t2));
 	}
 	/**Create with a bunch of nums.
 	\param t The number to emplace.
@@ -197,8 +88,10 @@ public:
 	template<typename T, typename...Ts>
 	BigNum(T&& t, Ts&&...ts)
 	{
+		if (sizeof...(Ts) % 2 == 0)
+			throw std::invalid_argument("Must have even number of digits.");
 		PushDigit(std::forward<T>(t));
-		PushDigit(std::forward<T>(ts)...);
+		PushDigit(std::forward<Ts>(ts)...);
 	}
 
 	///////////////////////////////////////////////////////////////////////////
@@ -234,18 +127,54 @@ public:
 	///////////////////////////////////////////////////////////SPLITTERS HERE//
 	///////////////////////////////////////////////////////////////////////////
 
-	/**Get the hi position ofthe number.*
-	\return A reference or copy of the number depending on the constness or
-	reference status of this number.
-	\param first The first units to bein the halftype.
-	\param amt The amount of units in the halftype
-	(will do first + i, amt times)*/
-	typename SplitterType::SplitterHalfType
-		Hi()
+
+
+	///////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////ACCESSORS HERE//
+	///////////////////////////////////////////////////////////////////////////
+
+	/**Direct access to the data.
+	\param i A compatibility param. Must be 1.
+	\return The data as a T&.*/
+	NumDataType& Get(std::size_t i)
 	{
-		auto sz = 0;
-		sz = Units == 0 ? m_data.Size() / 2 : Units / 2;
-		return SplitterType::Hi(Begin(), sz);
+		if (i >= m_data.Size())
+			throw std::invalid_argument("Paramter out of bounds.");
+		return m_data.Get(i);
+	}
+	/**Direct access to the data.
+	\param i A compatibility param. Must be 1.
+	\return The data as a T&.*/
+	const NumDataType& Get(std::size_t i) const
+	{
+		if (i >= m_data.Size())
+			throw std::invalid_argument("Paramter out of bounds.");
+		return m_data.Get(i);
+	}
+	/**Get an element.
+	\param i A compatibility param. Must be 0.
+	\return The data as a T&.*/
+	auto& operator[](std::size_t i)
+	{
+		return Get(i);
+	}
+	/**Get an element.
+	\param i A compatibility param. Must be 0.
+	\return The data as a T&.*/
+	const auto& operator[](std::size_t i) const
+	{
+		return Get(i);
+	}
+
+	///////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////UTILITIES HERE//
+	///////////////////////////////////////////////////////////////////////////
+
+	/**Get the size of the storage.
+	\return The amount of elements.*/
+	auto Size() const
+	{
+		return m_data.Size();
 	}
 private:
 	/**Helper for adding numbers.
@@ -255,7 +184,7 @@ private:
 	void PushDigit(T&& t, Ts&&...ts)
 	{
 		PushDigit(std::forward<T>(t));
-		PushDigit(std::forward<T>(ts)...);
+		PushDigit(std::forward<Ts>(ts)...);
 	}
 	/**Helper for adding numbers.
 	\param t The number to emplace.*/
@@ -267,6 +196,79 @@ private:
 	/**The list to hold data*/
 	cg::List<NumDataType, Units> m_data;
 };
+
+/**Helper for determining the return types of BigNum splitters.*/
+template<typename T, std::size_t S>
+class BigNumHelper
+{
+public:
+	const static bool DoNum = S == 2;
+	const static bool DoHeap = S == 0;
+	const static std::size_t NewSize = S == 0 ? 0 : S / 2;
+	using Type = std::conditional_t<
+		/*-*//*-*//*-*/DoNum,
+		/*-*//*-*//*-*/Num<T>,
+		/*-*//*-*//*-*/std::conditional_t<DoHeap,
+		/*-*//*-*//*-*//*-*/BigNum<T, 0>,
+		/*-*//*-*//*-*//*-*/BigNum<T, S / 2>
+		/*-*//*-*//*-*/>
+		/*-*//*-*/>;
+};
+
+/**Get the hi part.
+\param n The num for which to get the part.
+\return the apropriate part of the num `n`.*/
+template<typename T, std::size_t S>
+auto Hi(BigNum<T, S>& n)
+{
+	using RT = typename BigNumHelper<T, S>::Type;
+	cg::List<Num<T>, BigNumHelper<T, S>::NewSize> l;
+	auto sz = n.Size();
+	for (std::size_t i = n.Size() / 2; i < sz; ++i)
+		l.PushBack(n.Get(i).GetReference());
+	return RT(std::move(l));
+}
+/**Get the hi part.
+\param n The num for which to get the part.
+\return the apropriate part of the num `n`.*/
+template<typename T, std::size_t S>
+auto Hi(const BigNum<T, S>& n)
+{
+	using CT = const std::decay_t<T>&;
+	using RT = typename BigNumHelper<CT, S>::Type;
+	cg::List<Num<CT>, BigNumHelper<CT, S>::NewSize> l;
+	auto sz = n.Size();
+	for (std::size_t i = n.Size() / 2; i < sz; ++i)
+		l.PushBack(n.Get(i).GetReference());
+	return RT(std::move(l));
+}
+/**Get the lo part.
+\param n The num for which to get the part.
+\return the apropriate part of the num `n`.*/
+template<typename T, std::size_t S>
+auto Lo(BigNum<T, S>& n)
+{
+	using RT = typename BigNumHelper<T, S>::Type;
+	cg::List<Num<T>, BigNumHelper<T, S>::NewSize> l;
+	auto sz = n.Size();
+	for (std::size_t i = 0; i < sz / 2; ++i)
+		l.PushBack(n.Get(i).GetReference());
+	return RT(std::move(l));
+}
+/**Get the lo part.
+\param n The num for which to get the part.
+\return the apropriate part of the num `n`.*/
+template<typename T, std::size_t S>
+auto Lo(const BigNum<T, S>& n)
+{
+	using CT = const std::decay_t<T>&;
+	using RT = typename BigNumHelper<CT, S>::Type;
+	cg::List<Num<CT>, BigNumHelper<CT, S>::NewSize> l;
+	auto sz = n.Size();
+	for (std::size_t i = 0; i < sz / 2; ++i)
+		l.PushBack(n.Get(i).GetReference());
+	return RT(std::move(l));
+}
 
 
 template class BigNum<uint16_t&, 2>;

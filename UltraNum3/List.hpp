@@ -152,16 +152,18 @@ public:
 	}
 protected:
 	/**Get the address of the data.
+	\param i the offset.
 	\return The address of the data.*/
-	DataType* Addr()
+	DataType* Addr(std::size_t i = 0)
 	{
-		return (DataType*)m_data;
+		return ((DataType*)(m_data + (i * sizeof(T))));
 	}
 	/**Get the address of the data.
+	\param i the offset.
 	\return The address of the data.*/
-	const DataType* Addr()const
+	const DataType* Addr(std::size_t i = 0)const
 	{
-		return (const DataType*)m_data;
+		return ((const DataType*)(m_data+(i*sizeof(T))));
 	}
 	/**Stop copying*/
 	Storage(const SelfType&) = delete;
@@ -347,16 +349,18 @@ protected:
 		m_data = nData;
 	}
 	/**Get the address of the data.
+	\param i the offset.
 	\return The address of the data.*/
-	DataType* Addr()
+	DataType* Addr(std::size_t i = 0)
 	{
-		return m_data;
+		return m_data + i;
 	}
 	/**Get the address of the data.
+	\param i the offset.
 	\return The address of the data.*/
-	const DataType* Addr()const
+	const DataType* Addr(std::size_t i = 0)const
 	{
-		return m_data;
+		return m_data + i;
 	}
 };
 
@@ -494,7 +498,9 @@ public:
 	{
 		if (i > m_size)
 			throw std::invalid_argument("The index is out of bounds.");
-		return Addr()[i];
+		auto x = Addr();
+		auto r = x + i;
+		return *r;
 	}
 	/**Get an element without any dereference layer.
 	\param i The index to get.

@@ -87,7 +87,7 @@ HalfType& GetLoPart(uint32_t& n)
 }
 \end{lstlisting}
 
-When \Verb+T+ is a type such that \Verb+sizeof(T) == 1+, the type \Verb+cg::DemoteType<T>::Type+ does not exist and will cause a compiler error.
+When \Verb+T+ is a type such that \Verb+sizeof(T) == 1+, the type \Verb+cg::DemoteType<T>::Type+ is equal to T.
 
 \subsection{Using \theobjt}
 
@@ -100,7 +100,7 @@ auto nSize = sizeof(DoubleType); //nSize = 8, DoubleType = uint64_t
 \end{lstlisting}
 
 
-When \Verb+T+ is a type such that \Verb+sizeof(T) == 8+, the type \Verb+cg::PromoteType<T>::Type+ does not exist and will cause a compiler error.
+When \Verb+T+ is a type such that \Verb+sizeof(T) == 8+, the type \Verb+cg::PromoteType<T>::Type+ is equal to T.
 
 \subsection{Final Thoughts}
 
