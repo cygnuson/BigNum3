@@ -23,32 +23,62 @@ along with UltraNum2.  If not, see <http://www.gnu.org/licenses/>.
 #include <cstddef>
 #include <stdexcept>
 
-#include "Num.hpp"
+#include "Helpers.hpp"
 
-namespace cg 
+namespace cg
 {
 
 
-/**The basic math function pointer.  The carry will propagate over
+/**Array adding function.  The carry will propagate over
 adjacent pointers up to the amount in s1.
 \param arr1 The first array.
 \param s1 the max size of arr1.
 \param arr2 The second array.
-\param s2 The max size of r2.*/
-template<typename T, typename U>
-void AddNums(cg::Num<T>* arr1, std::size_t s1, const cg::Num<U>* arr2,
-		std::size_t s2)
+\param s2 The max size of r2.
+\return not relevent.*/
+template<typename T>
+bool AddArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
 {
-	auto & l = arr1->Get();
-	auto & r = arr2->Get();
+	auto & l = *arr1;
+	auto & r = *arr2;
 	l += r;
 	if (l < r && s1 != 1)
 	{
-		cg::Num<U> t(1);
-		AddNums(arr1 + 1, s1 - 1, &t, 1);
+		T t(1);
+		AddArray(arr1 + 1, s1 - 1, &t, 1);
 	}
 	if (s2 != 1 && s1 != 1)
-		AddNums(arr1 + 1, s1 - 1, arr2 + 1, s2 - 1);
+		AddArray(arr1 + 1, s1 - 1, arr2 + 1, s2 - 1);
+	return false;
+}
+/**The sub function.  The borrow will propagate over
+adjacent pointers up to the amount in s1.
+\param arr1 The first array.
+\param s1 the max size of arr1.
+\param arr2 The second array.
+\param s2 The max size of r2.
+\return True if the result went below zero. False if its still > 0.*/
+template<typename T>
+bool SubArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
+{
+	auto & l = *arr1;
+	bool doCarry = *arr2 > l;
+	auto r = cg::TwoComp(*arr2);
+	if (r != 0)
+	{
+		l += r;
+		if (doCarry && s1 != 1)
+		{
+			T t(1);
+			/*supress the carry with size 1 for arr1.  We ignore the carry when
+			`subbing` the `1` while in twos comp form.*/
+			SubArray(arr1 + 1, 1, &t, 1);
+		}
+	}
+	if (s2 != 1 && s1 != 1)
+		SubArray(arr1 + 1, s1 - 1, arr2 + 1, s2 - 1);
+
+	return false;
 }
 
 }
