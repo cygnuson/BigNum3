@@ -72,6 +72,17 @@ public:
 		for (std::size_t i = 0; i < other.m_size; ++i)
 			new (Addr() + i) DataType(std::move(other.Addr()[i]));
 	}
+	/**Create with an array of things.
+	\param arr The array to add.
+	\param aSize The size of the array.*/
+	Storage(const DataType* arr, std::size_t aSize)
+	{
+		if (aSize > SizeP)
+			throw std::invalid_argument("Array is too big.");
+		auto end = arr + aSize;
+		for (std::size_t i = 0; arr != end; ++arr)
+			Emplace(i++, *arr);
+	}
 	/**Create the int with initial values.
 
 	If SizeP != 0:
@@ -100,46 +111,18 @@ public:
 	/**Push an object to an index.
 	\param i The place to put the object.
 	\param o The thing to push.*/
-	void Insert(std::size_t i, const T& o)
+	template<typename NType>
+	void Insert(std::size_t i, NType&& o)
 	{
+		using U = std::decay_t<NType>;
 		if (i > m_size)
 			throw std::runtime_error("Index out of bounds.");
 		if (m_size == m_cap)
 			throw std::runtime_error("The list is full.");
 		if (m_size != i)
 			std::memmove(Addr() + i + 1, Addr() + i,
-				sizeof(T)*(m_cap - m_size));
-		new (Addr() + i)T(o);
-		++m_size;
-	}
-	/**Push an object to an index.
-	\param i The place to put the object.
-	\param o The thing to push.*/
-	void Insert(std::size_t i, T& o)
-	{
-		if (i > m_size)
-			throw std::runtime_error("Index out of bounds.");
-		if (m_size == m_cap)
-			throw std::runtime_error("The list is full.");
-		if (m_size != i)
-			std::memmove(Addr() + i + 1, Addr() + i,
-				sizeof(T)*(m_cap - m_size));
-		new (Addr() + i)T(o);
-		++m_size;
-	}
-	/**Push an object to an index.
-	\param i The place to put the object.
-	\param o The thing to push.*/
-	void Insert(std::size_t i, T&& o)
-	{
-		if (i > m_size)
-			throw std::runtime_error("Index out of bounds.");
-		if (m_size == m_cap)
-			throw std::runtime_error("The list is full.");
-		if (m_size != i)
-			std::memmove(Addr() + i + 1, Addr() + i,
-				sizeof(T)*(m_size - i));
-		new (Addr() + i)T(std::forward<T>(o));
+				sizeof(U)*(m_size - i));
+		new (Addr() + i)U(std::forward<NType>(o));
 		++m_size;
 	}
 	/**Emplace an object to an index.
@@ -215,6 +198,15 @@ public:
 		else
 			m_data = nullptr;
 	};
+	/**Create with an array of things.
+	\param arr The array to add.
+	\param aSize The size of the array.*/
+	Storage(const DataType* arr, std::size_t aSize)
+	{
+		auto end = arr + aSize;
+		for (std::size_t i = 0; arr != end; ++arr)
+			Emplace(i++,*arr);
+	}
 	/**Move ctor
 	\param other The thing to move.*/
 	Storage(SelfType&& other)
@@ -265,46 +257,18 @@ public:
 	/**Push an object to an index.
 	\param i The place to put the object.
 	\param o The thing to push.*/
-	void Insert(std::size_t i, const T& o)
+	template<typename NType>
+	void Insert(std::size_t i, NType&& o)
 	{
+		using U = std::decay_t<NType>;
 		if (i > m_size)
 			throw std::runtime_error("Index out of bounds.");
 		if (m_size == m_cap)
 			ExpandTo(m_cap + ExpandAmount);
 		if (m_size != i)
 			std::memmove(Addr() + i + 1, Addr() + i,
-				sizeof(T)*(m_cap - m_size));
-		new (Addr() + i)T(o);
-		++m_size;
-	}
-	/**Push an object to an index.
-	\param i The place to put the object.
-	\param o The thing to push.*/
-	void Insert(std::size_t i, T& o)
-	{
-		if (i > m_size)
-			throw std::runtime_error("Index out of bounds.");
-		if (m_size == m_cap)
-			ExpandTo(m_cap + ExpandAmount);
-		if (m_size != i)
-			std::memmove(Addr() + i + 1, Addr() + i,
-				sizeof(T)*(m_cap - m_size));
-		new (Addr() + i)T(o);
-		++m_size;
-	}
-	/**Push an object to an index.
-	\param i The place to put the object.
-	\param o The thing to push.*/
-	void Insert(std::size_t i, T&& o)
-	{
-		if (i > m_size)
-			throw std::runtime_error("Index out of bounds.");
-		if (m_size == m_cap)
-			ExpandTo(m_cap + ExpandAmount);
-		if (m_size != i)
-			std::memmove(Addr() + i + 1, Addr() + i,
-				sizeof(T)*(m_size - i));
-		new (Addr() + i)T(std::forward<T>(o));
+				sizeof(U)*(m_size - i));
+		new (Addr() + i)U(std::forward<NType>(o));
 		++m_size;
 	}
 	/**Emplace an object to an index.
@@ -392,6 +356,11 @@ public:
 	List(std::size_t initCap) : Storage(initCap) {};
 	/**Create the list with cap of 8.*/
 	List() : Storage(8) {};
+	/**Create with an array of things.
+	\param arr The array to add.
+	\param aSize The size of the array.*/
+	List(const DataType* arr, std::size_t aSize)
+		:Storage(arr, aSize) {}
 	/**Move ctor
 	\param other The thing to move.*/
 	List(SelfType&& other)
@@ -428,16 +397,6 @@ public:
 		for (std::size_t i = 0; i < sz; ++i)
 			PushBack(*(beg + i));
 	}
-	/**Create the object with a begin and size.
-	\param beg The first poitner.
-	\param size The amount of units starting with `beg`.*/
-	List(DataType* beg, std::size_t size)
-	{
-		if (size == 0)
-			throw std::invalid_argument("The size is zero.");
-		for (std::size_t i = 0; i < size; ++i)
-			PushBack(*(beg + i));
-	}
 	/**Set all available space. This will fill memory that is allocated, but
 	not marked as "used".
 	\param x The thing to set the space too.*/
@@ -454,15 +413,10 @@ public:
 	}
 	/**Push an object to the back of the list.
 	\param o The object.*/
-	void PushBack(const T& o)
+	template<typename U>
+	void PushBack(U&& o)
 	{
-		Insert(m_size, o);
-	}
-	/**Push an object to the back of the list.
-	\param o The object.*/
-	void PushBack(T& o)
-	{
-		Insert(m_size, o);
+		Insert(m_size, std::forward<U>(o));
 	}
 	/**Emplace an object to the back of the list.
 	\param o The object.*/
@@ -486,13 +440,8 @@ public:
 	}
 	/**Push an object to the front of the list.
 	\param o The object.*/
-	void PushFront(const T& o)
-	{
-		Insert(0, o);
-	}
-	/**Push an object to the front of the list.
-	\param o The object.*/
-	void PushFront(T&& o)
+	template<typename U>
+	void PushFront(U&& o)
 	{
 		Insert(0, std::move(o));
 	}

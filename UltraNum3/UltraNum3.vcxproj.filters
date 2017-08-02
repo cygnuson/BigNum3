@@ -41,9 +41,6 @@
     <ClInclude Include="Type.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Num.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="BigNum.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
