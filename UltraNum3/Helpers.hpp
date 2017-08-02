@@ -165,6 +165,21 @@ T LCM(const T& first, const T& second)
 	return lcmresult;
 }
 
+/**Make a number into twos compliment.
+\param n The number to change. Will be changed.*/
+template<typename DataType>
+void TwoCompInPlace(DataType& n)
+{
+	n = (~n) + 1;
+}
+/**Make a number into twos compliment.
+\param n The number to change.
+\return The new number.*/
+template<typename DataType>
+DataType TwoComp(const DataType& n)
+{
+	return (~n) + 1;
+}
 
 
 }

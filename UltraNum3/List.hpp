@@ -59,11 +59,19 @@ public:
 	/**Move ctor, to make it work with
 	\param other The thing to move.*/
 	Storage(SelfType&& other)
-		:m_cap(std::move(other.m_cap)), m_size(std::move(other.m_size))
+		: m_size(std::move(other.m_size))
 	{
 		for (std::size_t i = 0; i < other.m_size; ++i)
 			new (Addr() + i) DataType(std::move(other.Addr()[i]));
-	};
+	}
+	/**Move assign.
+	\param other The thing to move.*/
+	void operator=(SelfType&& other)
+	{
+		m_size = std::move(other.m_size);
+		for (std::size_t i = 0; i < other.m_size; ++i)
+			new (Addr() + i) DataType(std::move(other.Addr()[i]));
+	}
 	/**Create the int with initial values.
 
 	If SizeP != 0:
@@ -388,6 +396,12 @@ public:
 	\param other The thing to move.*/
 	List(SelfType&& other)
 		:Storage(std::move(other)) {};
+	/**Move assign.
+	\param other The thing to move.*/
+	void operator=(SelfType&& other)
+	{
+		Storage::operator=(std::move(other));
+	}
 	/**Create the int with initial values.
 
 	If SizeP != 0:
@@ -431,15 +445,6 @@ public:
 	{
 		for (std::size_t i = m_size; i < m_cap; ++i)
 			new (Begin() + i)T(x);
-	}
-	/**Push a value, and its `x` amount of increments. Ex: (a,3) will push
-	a, a+1, a+2, to the list. There will be `x` amount of insertions.
-	\param num The number.
-	\param x The amount to insert with increments.*/
-	void PushBackValueRange(DataType num, std::size_t x)
-	{
-		for (std::size_t i = 0; i < x; ++i)
-			PushBack(num + i);
 	}
 	/**Get the size of the storage.
 	\return The amount of elements.*/
@@ -496,11 +501,9 @@ public:
 	\return The object at i.*/
 	T& Get(std::size_t i)
 	{
-		if (i > m_size)
+		if (i >= m_size)
 			throw std::invalid_argument("The index is out of bounds.");
-		auto x = Addr();
-		auto r = x + i;
-		return *r;
+		return Addr()[i];
 	}
 	/**Get an element without any dereference layer.
 	\param i The index to get.

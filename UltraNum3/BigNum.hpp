@@ -24,7 +24,7 @@ along with UltraNum2.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdexcept>
 
 #include "List.hpp"
-#include "Num.hpp"
+#include "BasicMathFuncs.hpp"
 
 namespace cg {
 
@@ -51,9 +51,9 @@ public:
 	/**Require even number of digits.*/
 	static_assert(Units % 2 == 0, "Must have even size.");
 	/**A self reference type.*/
-	using RefSelf = BigNum<std::remove_reference_t<StoreType>&, Units>;
+	using RefSelf = BigNum<BasicStoreType&, Units>;
 	/**A self reference type.*/
-	using NonRefSelf = BigNum<const std::remove_reference_t<StoreType>&, Units>;
+	using NonRefSelf = BigNum<const BasicStoreType&, Units>;
 	/**A self reference type.*/
 	using Self = BigNum<_Internal_T, Units>;
 
@@ -65,6 +65,13 @@ public:
 	\param l The list.*/
 	BigNum(cg::List<NumDataType, Units>&& l)
 		:m_data(std::move(l))
+	{
+
+	}
+	/**Create with a premade list.
+	\param l The list.*/
+	BigNum(const cg::List<NumDataType, Units>& l)
+		:m_data(std::move(l.Copy()))
 	{
 
 	}
@@ -124,10 +131,27 @@ public:
 	}
 
 	///////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////SPLITTERS HERE//
+	///////////////////////////////////////////////////////////OPERATORS HERE//
 	///////////////////////////////////////////////////////////////////////////
 
-
+	/**Do a math operation.
+	\param r The thing to operate on this with.
+	\return A reference to this.*/
+	Self& operator+=(const BasicStoreType& r)
+	{
+		auto n = cg::MakeNum(r);
+		cg::AddNums(Begin(), Size(), &n, 1);
+		return *this;
+	}
+	/**Do a math operation.
+	\param r The thing to operate on this with.
+	\return A reference to this.*/
+	template<typename U, std::size_t S>
+	Self& operator+=(const BigNum<U,S>& r)
+	{
+		cg::AddNums(Begin(), Size(), r.Begin(), r.Size());
+		return *this;
+	}
 
 	///////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////ACCESSORS HERE//
@@ -138,8 +162,6 @@ public:
 	\return The data as a T&.*/
 	NumDataType& Get(std::size_t i)
 	{
-		if (i >= m_data.Size())
-			throw std::invalid_argument("Paramter out of bounds.");
 		return m_data.Get(i);
 	}
 	/**Direct access to the data.
@@ -147,8 +169,6 @@ public:
 	\return The data as a T&.*/
 	const NumDataType& Get(std::size_t i) const
 	{
-		if (i >= m_data.Size())
-			throw std::invalid_argument("Paramter out of bounds.");
 		return m_data.Get(i);
 	}
 	/**Get an element.
@@ -166,15 +186,112 @@ public:
 		return Get(i);
 	}
 
+	/**Set the value of the data.
+	\param i The index to set.
+	\param n The number to set.*/
+	void Set(std::size_t i, const BasicStoreType& n)
+	{
+		m_data.Get(i).Get() = n;
+	}
 	///////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////UTILITIES HERE//
 	///////////////////////////////////////////////////////////////////////////
 
+	/**Get a reference to the internal data of this object.
+	\return A modifiable reference to the data of this object.*/
+	RefSelf GetReference()
+	{
+		List<Num<BasicStoreType&>, Units> l;
+		auto beg = m_data.Begin();
+		auto end = m_data.End();
+		for (; beg != end; ++beg)
+			l.PushBack(beg->GetReference());
+		return RefSelf(std::move(l));
+	}
+	///**Get a Copy of the data.
+	//\return A copy of data of this object.*/
+	//NonRefSelf GetReference() const
+	//{
+	//	List<Num<const BasicStoreType&>, Units> l;
+	//	auto beg = m_data.Begin();
+	//	auto end = m_data.End();
+	//	for (; beg != end; ++beg)
+	//		l.PushBack(beg->GetReference());
+	//	return NonRefSelf(std::move(l));
+	//}
 	/**Get the size of the storage.
 	\return The amount of elements.*/
 	auto Size() const
 	{
 		return m_data.Size();
+	}
+	/**Get the amount of MSD-side-Zeros.
+	\return The amount of zeros that dont effect value.*/
+	std::size_t MSDZeros() const
+	{
+		std::size_t i = m_data.Size()-1;
+		while (m_data.Get(i).IsZero())
+			--i;
+		return i;
+	}
+	/**Get the amount of digits excluding the MSD side zeros (zeroes that 
+	dont change value).
+	\return The amount of non-MSD-zero digits.*/
+	std::size_t RealSize()const
+	{
+		return Size() - MSDZeros();
+	}
+	/**Determine if this is zero.
+	\return True if this is zero.*/
+	bool IsZero() const
+	{
+		return RealSize() == 0;
+	}
+	/**Create a copy of this thing that cuts all reference.
+	\return A copy of the object with copied data and no references.*/
+	NonRefSelf HardCopy() const
+	{
+		List<Num<const BasicStoreType&>, Units> l;
+		auto beg = m_data.Begin();
+		auto end = m_data.End();
+		for (; beg != end; ++beg)
+			l.EmplaceBack(beg->Get());
+		return NonRefSelf(std::move(l));
+	}
+	/**Create a copy of this thing..
+	\return A copy of the object.*/
+	Self Copy() const
+	{
+		List<NumDataType, Units> l;
+		auto beg = m_data.Begin();
+		auto end = m_data.End();
+		for (; beg != end; ++beg)
+			l.EmplaceBack(*beg);
+		return Self(std::move(l));
+	}
+	/**Swap the value of this and another thing.
+	\param other The other thing to swap with.*/
+	void Swap(Self& other)
+	{
+		auto t = std::move(other.m_data);
+		other.m_data = std::move(m_data);
+		m_data = std::move(t);
+	}
+	/**Apply twos compliment to this numbe.*/
+	void MakeTwoComp()
+	{
+		auto beg = Begin();
+		auto end = End();
+		for (; beg != end; ++beg)
+			beg->MakeTwoComp();
+	}
+	/**Apply compliment to this numbe.*/
+	void MakeComp()
+	{
+		auto beg = Begin();
+		auto end = End();
+		for (; beg != end; ++beg)
+			beg->MakeComp();
 	}
 private:
 	/**Helper for adding numbers.
@@ -195,6 +312,7 @@ private:
 	}
 	/**The list to hold data*/
 	cg::List<NumDataType, Units> m_data;
+private:
 };
 
 /**Helper for determining the return types of BigNum splitters.*/
@@ -270,6 +388,23 @@ auto Lo(const BigNum<T, S>& n)
 	return RT(std::move(l));
 }
 
+/**Make a big num. If all items are rvals, it will be non-ref. if all items
+are lvalues it will be a ref number. If there is a mix, then it will be non
+ref.
+\param t The first number. All types of ts must be same as the type of this
+param.
+\param ts The rest of the numbers.*/
+template<std::size_t S, typename T, typename...Ts>
+auto MakeBigNum(T&& t, Ts&&...ts)
+{
+	return BigNum<const std::decay_t<T>&, sizeof...(Ts)+1>(std::forward<T>(t),
+		std::forward<Ts>(ts)...);
+}
+template<std::size_t S, typename T>
+auto MakeBigNum(const BigNum<T, S>& n)
+{
+	return n.HardCopy();
+}
 
 template class BigNum<uint16_t&, 2>;
 template class BigNum<const uint16_t&, 2>;

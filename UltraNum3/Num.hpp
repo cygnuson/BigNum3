@@ -30,6 +30,7 @@ along with UltraNum2.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Type.hpp"
 #include "Endian.hpp"
+#include "Helpers.hpp"
 
 
 namespace cg {
@@ -71,9 +72,9 @@ public:
 	static_assert(std::is_reference<_Internal_T>::value,
 		"Type T must be a reference type.");
 	/**A self reference type.*/
-	using RefSelf = Num<std::remove_reference_t<StoreType>&>;
+	using RefSelf = Num<BasicStoreType&>;
 	/**A self reference type.*/
-	using NonRefSelf = Num<const std::remove_reference_t<StoreType>&>;
+	using NonRefSelf = Num<const BasicStoreType&>;
 	/**A self reference type.*/
 	using Self = Num<_Internal_T>;
 	/**The demoted type.*/
@@ -92,72 +93,20 @@ public:
 		:m_data(other.m_data) {}
 
 	///////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////ITERATORS HERE//
-	///////////////////////////////////////////////////////////////////////////
-
-	/**Get the begin iterator.
-	\return An iterator to the front of the list.*/
-	auto* Begin()
-	{
-		return &m_data;
-	}
-	/**Get the begin iterator.
-	\return An iterator to the front of the list.*/
-	const auto* Begin() const
-	{
-		return &m_data;
-	}
-	/**Get an iterator to the end+1 of the list.
-	\return An iterator to End+1*/
-	auto* End()
-	{
-		return  (&m_data) + 1;
-	}
-	/**Get an iterator to the end+1 of the list.
-	\return An iterator to End+1*/
-	const auto* End() const
-	{
-		return (&m_data) + 1;
-	}
-	///////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////ACCESSORS HERE//
 	///////////////////////////////////////////////////////////////////////////
 
 	/**Direct access to the data.
-	\param i A compatibility param. Must be 1.
 	\return The data as a T&.*/
-	BasicStoreType& Get(std::size_t i)
+	BasicStoreType& Get()
 	{
-		if (i != 0)
-			throw std::invalid_argument("Paramter out of bounds.");
 		return m_data;
 	}
 	/**Direct access to the data.
-	\param i A compatibility param. Must be 1.
 	\return The data as a T&.*/
-	const BasicStoreType& Get(std::size_t i) const
+	const BasicStoreType& Get() const
 	{
-		if (i != 0)
-			throw std::invalid_argument("Paramter out of bounds.");
 		return m_data;
-	}
-	/**Get an element.
-	\param i A compatibility param. Must be 0.
-	\return The data as a T&.*/
-	auto& operator[](std::size_t i)
-	{
-		if (i != 0)
-			throw std::invalid_argument("Paramter out of bounds.");
-		return Get(i);
-	}
-	/**Get an element.
-	\param i A compatibility param. Must be 0.
-	\return The data as a T&.*/
-	const auto& operator[](std::size_t i) const
-	{
-		if (i != 0)
-			throw std::invalid_argument("Paramter out of bounds.");
-		return Get(i);
 	}
 	///////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////UTILITIES HERE//
@@ -169,12 +118,12 @@ public:
 	{
 		return RefSelf(m_data);
 	}
-	/**Get a reference to the internal data of this object.
-	\return A modifiable reference to the data of this object.*/
-	NonRefSelf GetReference() const
-	{
-		return NonRefSelf(m_data);
-	}
+	///**Get a Copy of the data.
+	//\return A copy of data of this object.*/
+	//NonRefSelf GetReference() const
+	//{
+	//	return NonRefSelf(m_data);
+	//}
 
 	/**Set the value of the data.
 	\param n The number to set.*/
@@ -198,7 +147,7 @@ public:
 	\return True if this is zero.*/
 	bool IsZero() const
 	{
-		return Get(0) == 0;
+		return Get() == 0;
 	}
 	/**Create a copy of this thing that cuts all reference.
 	\return A copy of the object with copied data and no references.*/
@@ -214,6 +163,16 @@ public:
 		auto t = m_data;
 		m_data = other.m_data;
 		other.m_data = t;
+	}
+	/**Apply twos compliment to this numbe.*/
+	void MakeTwoComp()
+	{
+		cg::TwoCompInPlace(m_data);
+	}
+	/**Apply ones compliment to this number.*/
+	void MakeComp()
+	{
+		m_data = ~m_data;
 	}
 
 private:
@@ -274,23 +233,7 @@ private:
 template<typename T>
 auto MakeNum(T&& n)
 {
-	/*Will be true if T is deduced to be const& or T&&.*/
-	const static bool IsConst
-		/*Is Const& */
-		= std::is_const<std::remove_reference_t<T>>::value
-		/*Or T&& */
-		|| std::is_rvalue_reference<T&&>::value;
-	/*The base type of data when all the qualifiers are stripped away.*/
-	using RawBaseType
-		= std::remove_const_t<std::remove_reference_t<T>>;
-	/*The Type that has been deduced to be Num Template parameter.*/
-	using Type = std::conditional_t<
-		IsConst,
-		const T&,
-		T&
-	>;
-	/*Return the Proper num object.*/
-	return cg::Num<Type>(std::forward<T>(n));
+	return cg::Num<const std::decay_t<T>&>(std::forward<T>(n));
 }
 /**Create a Num in a wrapper.
 \param n The number.
@@ -299,23 +242,6 @@ template<typename T>
 auto MakeNum(const Num<T>& n)
 {
 	return MakeNum(n.Get());
-}
-/**Create a Num in a wrapper.
-\param n The number.
-\return A number in the Num wrapper, which references the parameter `n`.*/
-template<typename T>
-auto MakeNum(Num<T>& n)
-{
-	return MakeNum(n.Get());
-}
-
-/**Create a Num in a wrapper.
-\param n The number.
-\return A number in the Num wrapper, which references the parameter `n`.*/
-template<typename T>
-auto MakeNumC(const T& n)
-{
-	return MakeNum(n);
 }
 
 /**Helper for making nums.*/

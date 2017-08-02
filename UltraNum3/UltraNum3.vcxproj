@@ -115,6 +115,7 @@
     <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BasicMathFuncs.hpp" />
     <ClInclude Include="Endian.hpp" />
     <ClInclude Include="Helpers.hpp" />
     <ClInclude Include="BigNum.hpp" />
