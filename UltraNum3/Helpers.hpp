@@ -182,4 +182,55 @@ DataType TwoComp(const DataType& n)
 }
 
 
+/**Get an array of two upper half bits.
+\tparam DataType The base type of the array.
+\param num [in] The array of size 2.
+\return A reference to the hi bits of the array.*/
+template<typename DataType> inline
+DataType& Hi(DataType num)
+{
+	if (cg::Endian::little)
+		return (&num)[1];
+	else
+		return (&num)[0];
+}
+
+/**Get an array of two lower half bits.
+\tparam DataType The base type of the array.
+\param num [in] The array of size 2.
+\return A reference to the lo bits of the array.*/
+template<typename DataType> inline
+DataType& Lo(DataType num)
+{
+	if (cg::Endian::little)
+		return (&num)[0];
+	else
+		return (&num)[1];
+}
+/**Get an array of two upper half bits.
+\tparam DataType The base type of the array.
+\param num [in] The const array of size 2.
+\return A const reference to the hi bits of the array.*/
+template<typename DataType> inline
+const DataType& Hi(const DataType num)
+{
+	if (cg::Endian::little)
+		return (&num)[1];
+	else
+		return (&num)[0];
+}
+/**Get an array of two half bits.
+\tparam DataType The base type of the array.
+\param num [in] The const array of size 2.
+\return A const reference to the hi bits of the array.*/
+template<typename DataType> inline
+const DataType& Lo(const DataType num)
+{
+	if (cg::Endian::little)
+		return (&num)[0];
+	else
+		return (&num)[1];
+}
+
+
 }

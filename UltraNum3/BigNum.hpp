@@ -91,6 +91,20 @@ public:
 	{
 		return m_data.Begin();
 	}
+	/**Get the begin iterator.
+	\return An iterator to the front of the list.*/
+	template<typename U>
+	U* Begin()
+	{
+		return (U*) m_data.Begin();
+	}
+	/**Get the begin iterator.
+	\return An iterator to the front of the list.*/
+	template<typename U>
+	const U* Begin() const
+	{
+		return (const U*)m_data.Begin();
+	}
 	/**Get an iterator to the end+1 of the list.
 	\return An iterator to End+1*/
 	auto* End()
@@ -103,9 +117,23 @@ public:
 	{
 		return m_data.End();
 	}
+	/**Get an iterator to the end+1 of the list.
+	\return An iterator to End+1*/
+	template<typename U>
+	U* End()
+	{
+		return (U*)m_data.End();
+	}
+	/**Get an iterator to the end+1 of the list.
+	\return An iterator to End+1*/
+	template<typename U>
+	const U* End()
+	{
+		return (const U*)m_data.End();
+	}
 
 	///////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////OPERATORS HERE//
+	//////////////////////////////////////////////////////MATH OPERATORS HERE//
 	///////////////////////////////////////////////////////////////////////////
 
 	/**Do a math operation.
@@ -142,6 +170,78 @@ public:
 		(mf_subFunc)(Begin(), Size(), r.Begin(), r.Size());
 		return *this;
 	}
+	/**Do a math operation.
+	\param r The thing to operate on this with.
+	\return A reference to this.*/
+	Self& operator*=(const DataType& r)
+	{
+		if (m_data.CanInsert())
+			m_data.PushBack(0);
+		(mf_mulFunc)(Begin(), Size(), &r, 1);
+		return *this;
+	}
+	/**Do a math operation.
+	\param r The thing to operate on this with.
+	\return A reference to this.*/
+	template<typename U, std::size_t S>
+	Self& operator*=(const BigNum<U, S>& r)
+	{
+		auto newSize = (Size() + r.Size()) ;
+		while (Size() < newSize && m_data.CanInsert())
+			m_data.PushBack(0);
+		(mf_mulFunc)(Begin(), Size(), r.Begin(), r.Size());
+		return *this;
+	}
+
+
+	///////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////COMPARE OPERATORS HERE//
+	///////////////////////////////////////////////////////////////////////////
+
+	/**Do a comparison.
+	\param other The thing to compare to.
+	\return The result of the comparison.*/
+	bool operator<(const Self& other) const
+	{
+		return (mf_compFunc)(Begin(), Size(), other.Begin(), other.Size())
+			== -1;
+	}
+	/**Do a comparison.
+	\param other The thing to compare to.
+	\return The result of the comparison.*/
+	bool operator<=(const Self& other) const
+	{
+		return *this < other || *this == other;
+	}
+	/**Do a comparison.
+	\param other The thing to compare to.
+	\return The result of the comparison.*/
+	bool operator>(const Self& other) const
+	{
+		return !(*this <= other);
+	}
+	/**Do a comparison.
+	\param other The thing to compare to.
+	\return The result of the comparison.*/
+	bool operator>=(const Self& other) const
+	{
+		return !(*this < other);
+	}
+	/**Do a comparison.
+	\param other The thing to compare to.
+	\return The result of the comparison.*/
+	bool operator!=(const Self& other) const
+	{
+		return (mf_compFunc)(Begin(), Size(), other.Begin(), other.Size())
+			!= 0;
+	}
+	/**Do a comparison.
+	\param other The thing to compare to.
+	\return The result of the comparison.*/
+	bool operator==(const Self& other) const
+	{
+		return !(*this != other);
+	}
 
 	///////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////ACCESSORS HERE//
@@ -150,7 +250,7 @@ public:
 	/**Add an array of thing to the number.
 	\param arr The array to add.
 	\param aSize The size of the array.*/
-	void AddArray(const DataType* arr, std::size_t aSize)
+	void PushArray(const DataType* arr, std::size_t aSize)
 	{
 		auto end = arr + aSize;
 		for (; arr != end; ++arr)
@@ -249,17 +349,91 @@ public:
 		for (; beg != end; ++beg)
 			*beg = ~(*beg);
 	}
+	/**Trim off any non-value effecting zeroes.*/
+	void TrimMSDZeros()
+	{
+		m_data.PopBack(MSDZeros());
+	}
+	///////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////SHIFTERS HERE//
+	///////////////////////////////////////////////////////////////////////////
+
+	/**Shift the digits to the MSB side. Shifts whole units of DataType.
+	\param amt The amount of bytes  to shift.*/
+	void ShiftMSD(std::size_t amt)
+	{
+		(mf_digitShiftMSDFunc)(Begin(), Size(), amt);
+	}
+	/**Shift the digits to the MSD side. Shifts individual bits.
+	\param amt The amount of bits to shift.*/
+	void ShiftMSB(std::size_t amt)
+	{
+		(mf_digitShiftMSBFunc)(Begin(), Size(), amt);
+	}
+	/**Shift the digits to the LSB side. Shifts whole units of DataType.
+	\param amt The amount of bytes  to shift.*/
+	void ShiftLSD(std::size_t amt)
+	{
+		(mf_digitShiftLSDFunc)(Begin(), Size(), amt);
+	}
+	/**Shift the digits to the LSB side. Shifts individual bits.
+	\param amt The amount of bits  to shift.*/
+	void ShiftLSB(std::size_t amt)
+	{
+		(mf_digitShiftLSBFunc)(Begin(), Size(), amt);
+	}
+	///////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////SHIFTER OPERATORS HERE//
+	///////////////////////////////////////////////////////////////////////////
+
+	/**Do a shift.
+	\param amt The amount to shift.
+	\return a reference to this.*/
+	Self& operator<<=(const std::size_t amt)
+	{
+		ShiftMSB(amt);
+		return *this;
+	}
+	/**Do a shift.
+	\param amt The amount to shift.
+	\return a reference to this.*/
+	Self& operator>>=(const std::size_t amt)
+	{
+		ShiftLSB(amt);
+		return *this;
+	}
+	
 private:
 	/**The list to hold data*/
 	cg::List<DataType, Units> m_data;
 private:
 	/**The type of math function pointers.*/
-	using MathFuncPtr 
+	using MathFuncPtr
 		= bool(*)(DataType*, std::size_t, const DataType*, std::size_t);
+	/**The type of compare function pointers.*/
+	using CompareFuncPtr
+		= int(*)(const DataType*, std::size_t, const DataType*, std::size_t);
+	/**The type of shifter function pointers.*/
+	using ShiftFuncPtr
+		= void(*)(DataType*, std::size_t, std::size_t);
 	/**The function to call for adding the arrays*/
 	MathFuncPtr mf_addFunc = &cg::AddArray;
 	/**The function to call for subtracting the arrays*/
 	MathFuncPtr mf_subFunc = &cg::SubArray;
+	/**The function to call for multiplying the arrays*/
+	MathFuncPtr mf_mulFunc = &cg::MulArray;
+	/**The function to call for dividing the arrays*/
+	MathFuncPtr mf_divFunc = &cg::DivArray;
+	/**The function to call for comparing the arrays*/
+	CompareFuncPtr mf_compFunc = &cg::CompareArray;
+	/**The function to call for shifting the arrays*/
+	ShiftFuncPtr mf_digitShiftMSDFunc = &cg::ShiftSig;
+	/**The function to call for shifting the arrays*/
+	ShiftFuncPtr mf_digitShiftLSDFunc = &cg::ShiftInsig;
+	/**The function to call for shifting the arrays*/
+	ShiftFuncPtr mf_digitShiftMSBFunc = &cg::ShiftSigB;
+	/**The function to call for shifting the arrays*/
+	ShiftFuncPtr mf_digitShiftLSBFunc = &cg::ShiftInsigB;
 };
 
 /**Get a pointer to a number as a lesser type.

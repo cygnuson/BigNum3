@@ -113,6 +113,7 @@
   <ItemGroup>
     <ClCompile Include="Endian.cpp" />
     <ClCompile Include="test.cpp" />
+    <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BasicMathFuncs.hpp" />
@@ -122,6 +123,8 @@
     <ClInclude Include="List.hpp" />
     <ClInclude Include="Power.hpp" />
     <ClInclude Include="Rational.hpp" />
+    <ClInclude Include="SpeedLimit.hpp" />
+    <ClInclude Include="Timer.hpp" />
     <ClInclude Include="Type.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
