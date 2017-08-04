@@ -22,12 +22,33 @@ along with UltraNum2.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cstddef>
 #include <stdexcept>
+#include <utility>
 
 #include "Helpers.hpp"
 #include "Type.hpp"
+#include "BasicBits.hpp"
 
 namespace cg
 {
+
+/**Determine if an array is zero.
+\param arr The array.
+\param s The size of the array.
+\return True if the array is zero.*/
+template<typename T>
+bool IsZero(const T* arr, std::size_t s)
+{
+	return std::count(arr, arr + s, 0) == s;
+}
+/**Determine if an array is one.
+\param arr The array.
+\param s The size of the array.
+\return True if the array is zero.*/
+template<typename T>
+bool IsOne(const T* arr, std::size_t s)
+{
+	return (*arr == 1) && std::count(arr + 1, arr + s, 0) == s;
+}
 
 /**Compare two objects.  This function assumes that there are no leading zeros
 that do not effect the value of the function.
@@ -82,6 +103,15 @@ bool AddArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
 		AddArray(arr1 + 1, s1 - 1, arr2 + 1, s2 - 1);
 	return false;
 }
+/**Add a single num to the array.
+\param arr The array.
+\param s The size of the array.
+\param n A number to add to the array.*/
+template<typename T>
+void AddArray(T* arr, std::size_t s, const T& n)
+{
+	AddArray(arr, s, &n, 1);
+}
 /**The sub function.  The borrow will propagate over
 adjacent pointers up to the amount in s1.
 \param arr1 The first array.
@@ -112,6 +142,15 @@ bool SubArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
 	return false;
 }
 
+/**Sub a single num from the array.
+\param arr The array.
+\param s The size of the array.
+\param n A number to sub from the array.*/
+template<typename T>
+void SubArray(T* arr, std::size_t s, const T& n)
+{
+	SubArray(arr, s, &n, 1);
+}
 /**The mult function.  The borrow will propagate over
 adjacent pointers up to the amount in s1.  Should be called with T = a type
 that is half the size of the actual type.
@@ -143,103 +182,103 @@ bool MulArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
 	std::memmove(arr1, tArr, s1 * sizeof(DT));
 	return false;
 }
-/**Shift the array toward the significant side.  This function shifts enire
-units of T.
-\param arr1 The array.
-\param s1 The size of the array.
-\param amt The amount to shift.*/
+/**Iteger power function.
+\param num A reference to the number to apply to the power.
+\param exp The exponent to apply.
+\return A reference to num*/
 template<typename T>
-void ShiftSig(T* arr1, std::size_t s1, std::size_t amt)
+inline T& PowInPlace(T& num, const T& exp)
 {
-	if (amt >= s1)
+	if (exp == 0)
 	{
-		std::memset(arr1, 0, s1 * sizeof(T));
-		return;
+		num = 1;
+		return num;
 	}
-	std::memmove(arr1 + amt, arr1, (s1 - amt) * sizeof(T));
-	std::memset(arr1, 0, amt * sizeof(T));
-	return;
-}
-/**Shift the array toward the significant side.  This function shifts bits.
-\param arr1 The array.
-\param s1 The size of the array.
-\param amt The amount to shift (in bits).*/
-template<typename T>
-void ShiftSigB(T* arr1, std::size_t s1, std::size_t amt)
-{
-	const static std::size_t TBits = (sizeof(T) * 8);
-	std::size_t bytes = (amt / 8);
-	std::size_t leftOver = amt % 8;
-	if (bytes > 0)
-		ShiftSig<uint8_t>((uint8_t*)arr1, s1 * sizeof(T), bytes);
-	T carry = 0;
-	auto beg = arr1;
-	auto end = arr1 + s1;
-	for (; beg != end; ++beg)
+	T base = num;
+	num = 1;
+	while (exp)
 	{
-		T nC = *beg >> (TBits - leftOver);
-		*beg <<= leftOver;
-		*beg |= carry;
-		carry = nC;
+		if (exp & 1)
+			num *= base;
+		exp >>= 1;
+		base *= base;
 	}
-	return;
-}
-/**Shift the array toward the significant side.  This function shifts enire
-units of T.
-\param arr1 The array.
-\param s1 The size of the array.
-\param amt The amount to shift.*/
-template<typename T>
-void ShiftInsig(T* arr1, std::size_t s1, std::size_t amt)
-{
-	if (amt >= s1)
-	{
-		std::memset(arr1, 0, s1 * sizeof(T));
-		return;
-	}
-	std::memmove(arr1, arr1 + amt, (s1 - amt) * sizeof(T));
-	std::memset(arr1 + (s1 - amt), 0, amt * sizeof(T));
-	return;
-}
-/**Shift the array toward the significant side.  This function shifts bits.
-\param arr1 The array.
-\param s1 The size of the array.
-\param amt The amount to shift.*/
-template<typename T>
-void ShiftInsigB(T* arr1, std::size_t s1, std::size_t amt)
-{
-	const static std::size_t TBits = (sizeof(T) * 8);
-	std::size_t bytes = (amt / 8);
-	std::size_t leftOver = amt % 8;
-	if (bytes > 0)
-		ShiftInsig<uint8_t>((uint8_t*)arr1, s1 * sizeof(T), bytes);
-	T carry = 0;
-	auto beg = arr1 + s1 -1;
-	auto end = arr1 -1;
-	for (; beg != end; --beg)
-	{
-		T nC = *beg << (TBits - leftOver);
-		*beg >>= leftOver;
-		*beg |= carry;
-		carry = nC;
-	}
-	return;
-}
+	return num;
 
-/**The basic division function.
+}
+/**The basic division function.  This function assumes there are no MSB zeros.
 \param arr1 The first dividend array.
 \param s1 The size of the first array.
 \param arr2 The second divisor array.
 \param s2 The size of the second array.
+\param arr3 The third array that will hold the modulo of the operation. Iff its
+nullptr (or 0) it will be ignored.  If its not false, it must be the same size
+as s1.
 \return false always.*/
 template<typename T>
-bool DivArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
+bool DivArray_Shift(T* arr1, std::size_t s1, const T* arr2, std::size_t s2,
+	T* arr3)
 {
 	static_assert(sizeof(T) > 1, "T must be at least 2 bytes long.");
-	T* tBuf = new T[s1];
+	if (s1 < s2)
+	{
+		if (arr3 != nullptr)
+		{
+			std::memset(arr3, 0, s1 * sizeof(T));
+			std::memmove(arr3, arr1, s1 * sizeof(T));
+		}
+		std::memset(arr1, 0, s1 * sizeof(T));
+		return false;
+	}
+	if (IsZero(arr2, s2))
+		throw std::invalid_argument("Divisor is zero.");
+	T* tBuf = new T[s1]();
+	T* counter = new T[s1]();
+	std::size_t shifted = 0;
 	std::memmove(tBuf, arr2, s2 * sizeof(T));
-
-
+	std::size_t msb_tBuf = MSBNumber(tBuf, s1);
+	std::size_t msb_arr1 = MSBNumber(arr1, s1);
+	std::size_t shfAmt = (msb_arr1 - 2) - msb_tBuf;
+	ShiftSigB(tBuf, s1, shfAmt);
+	int c = CompareArray(arr1, s1, tBuf, s1);
+	if (c == 0)
+	{
+		std::memset(arr1, 0, s1 * sizeof(T));
+		std::memset(arr3, 0, s1 * sizeof(T));
+		*arr1 = 1;
+		return false;
+	}
+	bool go = c == 1;
+	while (go && !IsZero(tBuf, s1))
+	{
+		SubArray(arr1, s1, tBuf, s1);
+		AddArray<T>(counter, s1, 1);
+		//if (!IsZero(arr1, s1))
+		//{
+			go = CompareArray(arr1, s1, tBuf, s1) == 1;
+		//}
+		//else
+		//	go = false;
+		while (!go)
+		{
+			if (shfAmt == 0)
+			{
+				go = false;
+				break;
+			}
+			ShiftInsigB(tBuf, s1, 1);
+			--shfAmt;
+			ShiftSigB(counter, s1, 1);
+			int c = CompareArray(arr1, s1, tBuf, s1);
+			go = c == 1 || c == 0;
+		}
+	}
+	if (arr3 != nullptr)
+	{
+		std::memset(arr3, 0, s1 * sizeof(T));
+		std::memmove(arr3, arr1, s1 * sizeof(T));
+	}
+	std::memmove(arr1, counter, s1 * sizeof(T));
 	return false;
 }
 

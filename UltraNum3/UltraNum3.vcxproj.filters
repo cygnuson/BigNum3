@@ -56,5 +56,8 @@
     <ClInclude Include="SpeedLimit.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BasicBits.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -11,6 +11,8 @@
 uint64_t RandomU64();
 uint64_t RandomU64_2();
 bool TestBigNumAdd(std::size_t amt);
+bool TestBigNumDiv(std::size_t amt);
+bool TestBigNumMod(std::size_t amt);
 bool TestBigLShift(std::size_t amt);
 bool TestBigRShift(std::size_t amt);
 bool TestBigNumCompare(std::size_t amt);
@@ -19,27 +21,32 @@ bool TestBigNumMul(std::size_t amt);
 
 int main()
 {
-
-	uint64_t n1 = 7116534513545867317;
+	/*uint64_t n1 = 95388766592158;
+	uint64_t n2 = 45589;
 	auto a = cg::BigNum<uint16_t, 4>();
-	a.PushArray(cg::AsArray<uint16_t>(&n1), 4);
+	a.PushArray(cg::AsArray<uint16_t>(n1), 4);
+	auto b = cg::BigNum<uint16_t, 4>();
+	b.PushArray(cg::AsArray<uint16_t>(n2), 4);
+
+	uint64_t answer = n1 / n2;
+	auto funcLambda = [&]()
+	{
+		a /= b;
+	};
+	funcLambda();
 
 	auto bAns = *((uint64_t*)a.Begin());
 
-	auto a2 = cg::BigNum<uint16_t, 4>(0,1,0,0);
-	
+	assert(answer == bAns);*/
 
-	auto beg = a2.Begin();
-	auto end = a2.End();
-	for (; beg != end; ++beg)
-		;// std::cout << *beg << ",";
-
-	TestBigLShift(1000000);
-	TestBigRShift(1000000);
-	TestBigNumSub(1000000);
-	TestBigNumCompare(1000000);
-	TestBigNumAdd(1000000);
-	TestBigNumMul(1000000);
+	TestBigLShift		(100000);
+	TestBigRShift		(100000);
+	TestBigNumSub		(100000);
+	TestBigNumDiv		(100000);
+	TestBigNumCompare	(100000);
+	TestBigNumAdd		(100000);
+	TestBigNumMul		(100000);
+	TestBigNumMod		(100000);
 
 	int stop = 0;
 	return stop;
@@ -156,6 +163,41 @@ bool TestBigNumSub(std::size_t amt)
 
 	return false;
 }
+bool TestBigNumDiv(std::size_t amt)
+{
+	std::srand((unsigned int)std::time(0));
+	double time = 0.0;
+	for (std::size_t i = 0; i < amt; ++i)
+	{
+		uint64_t n1 = RandomU64();
+		uint64_t n2 = RandomU64() % 200000;
+		if (n1 < n2)
+		{
+			auto x = n1;
+			n1 = n2;
+			n2 = x;
+		}
+		if (n2 == 0)
+			n2 = 1;
+		auto a = cg::BigNum<uint16_t, 4>();
+		a.PushArray(cg::AsArray<uint16_t>(n1), 4);
+		auto b = cg::BigNum<uint16_t, 4>();
+		b.PushArray(cg::AsArray<uint16_t>(n2), 4);
+		uint64_t answer = n1 / n2;
+		auto funcLambda = [&]()
+		{
+			a /= b;
+		};
+		time += cg::Timer::TimedCall(funcLambda).count();
+
+		auto bAns = *((uint64_t*)a.Begin());
+
+		assert(answer == bAns);
+	}
+	std::cout << " Div: " << time / amt << std::endl;
+
+	return false;
+}
 bool TestBigNumMul(std::size_t amt)
 {
 	std::srand((unsigned int)std::time(0));
@@ -238,6 +280,42 @@ bool TestBigRShift(std::size_t amt)
 	}
 
 	std::cout << "RShf: " << time / amt << std::endl;
+
+	return false;
+}
+
+bool TestBigNumMod(std::size_t amt)
+{
+	std::srand((unsigned int)std::time(0));
+	double time = 0.0;
+	for (std::size_t i = 0; i < amt; ++i)
+	{
+		uint64_t n1 = RandomU64();
+		uint64_t n2 = RandomU64() % 200000;
+		if (n1 < n2)
+		{
+			auto x = n1;
+			n1 = n2;
+			n2 = x;
+		}
+		if (n2 == 0)
+			n2 = 1;
+		auto a = cg::BigNum<uint16_t, 4>();
+		a.PushArray(cg::AsArray<uint16_t>(n1), 4);
+		auto b = cg::BigNum<uint16_t, 4>();
+		b.PushArray(cg::AsArray<uint16_t>(n2), 4);
+		uint64_t answer = n1 % n2;
+		auto funcLambda = [&]()
+		{
+			a %= b;
+		};
+		time += cg::Timer::TimedCall(funcLambda).count();
+
+		auto bAns = *((uint64_t*)a.Begin());
+
+		assert(answer == bAns);
+	}
+	std::cout << " Mod: " << time / amt << std::endl;
 
 	return false;
 }

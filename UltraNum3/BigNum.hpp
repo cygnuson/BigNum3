@@ -186,10 +186,48 @@ public:
 	template<typename U, std::size_t S>
 	Self& operator*=(const BigNum<U, S>& r)
 	{
-		auto newSize = (Size() + r.Size()) ;
+		auto newSize = (Size() + r.Size());
 		while (Size() < newSize && m_data.CanInsert())
 			m_data.PushBack(0);
 		(mf_mulFunc)(Begin(), Size(), r.Begin(), r.Size());
+		return *this;
+	}
+	/**Do a math operation.
+	\param r The thing to operate on this with.
+	\return A reference to this.*/
+	Self& operator/=(const DataType& r)
+	{
+		(mf_divFunc)(Begin(), Size(), &r, 1, nullptr);
+		return *this;
+	}
+	/**Do a math operation.
+	\param r The thing to operate on this with.
+	\return A reference to this.*/
+	template<typename U, std::size_t S>
+	Self& operator/=(const BigNum<U, S>& r)
+	{
+		(mf_divFunc)(Begin(), Size(), r.Begin(), r.RealSize(), nullptr);
+		return *this;
+	}
+	/**Do a math operation.
+	\param r The thing to operate on this with.
+	\return A reference to this.*/
+	Self& operator%=(const DataType& r)
+	{
+		DataType* t = new DataType[Size()];
+		(mf_divFunc)(Begin(), Size(), &r, 1, t);
+		std::memmove(Begin(), t, Size() * sizeof(DataType));
+		return *this;
+	}
+	/**Do a math operation.
+	\param r The thing to operate on this with.
+	\return A reference to this.*/
+	template<typename U, std::size_t S>
+	Self& operator%=(const BigNum<U, S>& r)
+	{
+		DataType* t = new DataType[Size()];
+		(mf_divFunc)(Begin(), Size(), r.Begin(), r.RealSize(), t);
+		std::memmove(Begin(), t, Size() * sizeof(DataType));
 		return *this;
 	}
 
@@ -203,8 +241,8 @@ public:
 	\return The result of the comparison.*/
 	bool operator<(const Self& other) const
 	{
-		return (mf_compFunc)(Begin(), Size(), other.Begin(), other.Size())
-			== -1;
+		return (mf_compFunc)(Begin(), RealSize(), other.Begin(),
+			other.RealSize()) == -1;
 	}
 	/**Do a comparison.
 	\param other The thing to compare to.
@@ -232,8 +270,8 @@ public:
 	\return The result of the comparison.*/
 	bool operator!=(const Self& other) const
 	{
-		return (mf_compFunc)(Begin(), Size(), other.Begin(), other.Size())
-			!= 0;
+		return (mf_compFunc)(Begin(), RealSize(), other.Begin(), 
+			other.RealSize()) != 0;
 	}
 	/**Do a comparison.
 	\param other The thing to compare to.
@@ -307,9 +345,21 @@ public:
 	\return The amount of zeros that dont effect value.*/
 	std::size_t MSDZeros() const
 	{
-		std::size_t i = m_data.Size()-1;
-		while (m_data.Get(i) == 0)
-			--i;
+		std::size_t i = 0;
+		auto beg = End() - 1;
+		auto end = Begin() - 1;
+		for (; beg != end; --beg)
+		{
+			if (*beg == 0)
+			{
+				++i;
+			}
+			else
+			{
+				return i;
+			}
+
+		}
 		return i;
 	}
 	/**Get the amount of digits excluding the MSD side zeros (zeroes that 
@@ -410,6 +460,10 @@ private:
 	/**The type of math function pointers.*/
 	using MathFuncPtr
 		= bool(*)(DataType*, std::size_t, const DataType*, std::size_t);
+	/**The type of division function pointers.*/
+	using DivFuncPtr
+		= bool(*)(DataType*, std::size_t, const DataType*, std::size_t,
+			DataType*);
 	/**The type of compare function pointers.*/
 	using CompareFuncPtr
 		= int(*)(const DataType*, std::size_t, const DataType*, std::size_t);
@@ -423,7 +477,7 @@ private:
 	/**The function to call for multiplying the arrays*/
 	MathFuncPtr mf_mulFunc = &cg::MulArray;
 	/**The function to call for dividing the arrays*/
-	MathFuncPtr mf_divFunc = &cg::DivArray;
+	DivFuncPtr mf_divFunc = &cg::DivArray_Shift;
 	/**The function to call for comparing the arrays*/
 	CompareFuncPtr mf_compFunc = &cg::CompareArray;
 	/**The function to call for shifting the arrays*/
