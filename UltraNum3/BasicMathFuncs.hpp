@@ -35,7 +35,7 @@ namespace cg
 \param arr The array.
 \param s The size of the array.*/
 template<typename T>
-inline void ZeroOut(T* arr, std::size_t s)
+inline void ZeroOut(T* arr, const std::size_t s)
 {
 	std::memset(arr, 0, s * sizeof(T));
 }
@@ -52,7 +52,7 @@ inline void ZeroOut(cg::ArrayView<T>& arr)
 \param s The size of the array.
 \return True if the array is zero.*/
 template<typename T>
-inline bool IsZero(const T* arr, std::size_t s)
+inline bool IsZero(const T* arr, const std::size_t s)
 {
 	for (std::size_t i = 0; i < s; ++i)
 		if (arr[i] != 0)
@@ -72,7 +72,7 @@ inline bool IsZero(const cg::ArrayView<T>& arr)
 \param s The size of the array.
 \return True if the array is zero.*/
 template<typename T>
-inline bool IsOne(const T* arr, std::size_t s)
+inline bool IsOne(const T* arr, const std::size_t s)
 {
 	return (*arr == 1) && IsZero(arr + 1, s - 1);
 }
@@ -92,8 +92,8 @@ that do not effect the value of the function.
 \param s2 The max size of r2.
 \return -1 if arr1 < arr2, 0 if arr1 == arr2, 1 if arr1 > arr2.*/
 template<typename T>
-inline int CompareArray(const T* arr1, std::size_t s1, const T* arr2,
-	std::size_t s2)
+inline int CompareArray(const T* arr1, const  std::size_t s1, 
+	const T* arr2, const std::size_t s2)
 {
 	if (s1 == s2)
 	{
@@ -137,7 +137,8 @@ adjacent pointers up to the amount in s1.
 \param s2 The max size of r2.
 \return false always.*/
 template<typename T>
-inline bool AddArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
+inline bool AddArray(T* arr1, const std::size_t s1, 
+	const T* arr2, const std::size_t s2)
 {
 	auto & l = *arr1;
 	auto & r = *arr2;
@@ -166,7 +167,7 @@ inline bool AddArray(cg::ArrayView<T>& arr1, const cg::ArrayView<T>& arr2)
 \param s The size of the array.
 \param n A number to add to the array.*/
 template<typename T>
-inline void AddArray(T* arr, std::size_t s, const T& n)
+inline void AddArray(T* arr, const std::size_t s, const T& n)
 {
 	AddArray(arr, s, &n, 1);
 }
@@ -186,7 +187,8 @@ adjacent pointers up to the amount in s1.
 \param s2 The max size of r2.
 \return True if the result went below zero. False if its still > 0.*/
 template<typename T>
-inline bool SubArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
+inline bool SubArray(T* arr1, const std::size_t s1,
+	const T* arr2, const std::size_t s2)
 {
 	auto & l = *arr1;
 	bool doCarry = *arr2 > l;
@@ -223,7 +225,7 @@ inline bool SubArray(cg::ArrayView<T>& arr1, const cg::ArrayView<T>& arr2)
 \param s The size of the array.
 \param n A number to sub from the array.*/
 template<typename T>
-inline void SubArray(T* arr, std::size_t s, const T& n)
+inline void SubArray(T* arr, const std::size_t s, const T& n)
 {
 	SubArray(arr, s, &n, 1);
 }
@@ -239,19 +241,20 @@ inline void SubArray(cg::ArrayView<T>& arr, const T& n)
 adjacent pointers up to the amount in s1.  Should be called with T = a type
 that is half the size of the actual type.
 \param arr1 The first array.
-\param s1 the max size of arr1.
+\param s1p the max size of arr1.
 \param arr2 The second array.
-\param s2 The max size of r2.
+\param s2p The max size of r2.
 \return false always.*/
 template<typename T>
-inline bool MulArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
+inline bool MulArray(T* arr1, const  std::size_t s1p,
+	const T* arr2, const std::size_t s2p)
 {
 	static_assert(sizeof(T) > 1, "T must be at least 2 bytes long.");
 	using DT = typename cg::DemoteType<T>::Type;
 	/*The arrays are casted to half the size type, so double the amount of
 	units.*/
-	s1 += s1;
-	s2 += s2;
+	const std::size_t s1 = s1p + s1p;
+	const std::size_t s2 = s2p + s1p;
 	DT* tArr = new DT[s1]();
 
 	for (std::size_t i = 0; i < s1; ++i)
@@ -310,8 +313,8 @@ inline T& PowInPlace(T& num, std::size_t exp)
 \param max The total amount of shifts that may be made.
 \return The amount of shifts made on arr1.*/
 template<typename T>
-inline std::size_t MaximumShift(T* arr1, std::size_t s1, const T* arr2,
-	std::size_t s2, std::size_t max)
+inline std::size_t MaximumShift(T* arr1, const std::size_t s1, const T* arr2,
+	const std::size_t s2, const  std::size_t max)
 {
 	if (max == 0)
 		return 0;
@@ -344,7 +347,7 @@ inline std::size_t MaximumShift(T* arr1, std::size_t s1, const T* arr2,
 \return The amount of shifts made on arr1.*/
 template<typename T>
 inline std::size_t MaximumShift(cg::ArrayView<T>& arr1,
-	const cg::ArrayView<T>& arr2, std::size_t max)
+	const cg::ArrayView<T>& arr2, const std::size_t max)
 {
 	return MaximumShift(arr1.Begin(), arr1.Size(),
 		arr2.Begin(), arr2.Size(), max);
@@ -359,8 +362,8 @@ returnes.
 nullptr (or 0) it will be ignored.  If its not false, it must be the same size
 as s1.*/
 template<typename T>
-inline void DivArray_Shift(T* arr1, std::size_t s1, const T* arr2,
-	std::size_t s2, T* arr3)
+inline void DivArray_Shift(T* arr1, const std::size_t s1, const T* arr2,
+	const std::size_t s2, T* arr3)
 {
 	static_assert(sizeof(T) > 1, "T must be at least 2 bytes long.");
 	const static T TMax = std::numeric_limits<T>::max();
@@ -455,8 +458,8 @@ inline void DivArray_Shift(T* arr1, std::size_t s1, const T* arr2,
 nullptr (or 0) it will be ignored.  If its not false, it must be the same size
 as s1.*/
 template<typename T>
-inline void DivArray_Shift(cg::ArrayView<T>& arr1, const cg::ArrayView<T>& arr2,
-	cg::ArrayView<T>& arr3)
+inline void DivArray_Shift(cg::ArrayView<T>& arr1, 
+	const cg::ArrayView<T>& arr2, cg::ArrayView<T>& arr3)
 {
 	if (arr1.Size() != arr3.Size())
 		throw std::runtime_error(

@@ -531,17 +531,19 @@ private:
 private:
 	/**The type of math function pointers.*/
 	using MathFuncPtr
-		= bool(*)(DataType*, std::size_t, const DataType*, std::size_t);
+		= bool(*)(DataType*, const std::size_t, 
+			const DataType*, const std::size_t);
 	/**The type of division function pointers.*/
 	using DivFuncPtr
-		= void(*)(DataType*, std::size_t, const DataType*, std::size_t,
-			DataType*);
+		= void(*)(DataType*, const std::size_t, const DataType*, 
+			const std::size_t, DataType*);
 	/**The type of compare function pointers.*/
 	using CompareFuncPtr
-		= int(*)(const DataType*, std::size_t, const DataType*, std::size_t);
+		= int(*)(const DataType*, const std::size_t, 
+			const DataType*, const std::size_t);
 	/**The type of shifter function pointers.*/
 	using ShiftFuncPtr
-		= void(*)(DataType*, std::size_t, std::size_t);
+		= void(*)(DataType*, const std::size_t, const std::size_t);
 	/**The function to call for adding the arrays*/
 	MathFuncPtr mf_addFunc = &cg::AddArray;
 	/**The function to call for subtracting the arrays*/
