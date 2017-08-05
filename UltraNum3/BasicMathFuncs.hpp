@@ -22,7 +22,7 @@ along with UltraNum2.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cstddef>
 #include <stdexcept>
-#include <utility>
+#include <algorithm>
 
 #include "Helpers.hpp"
 #include "Type.hpp"
@@ -57,7 +57,6 @@ inline bool IsZero(const T* arr, std::size_t s)
 	for (std::size_t i = 0; i < s; ++i)
 		if (arr[i] != 0)
 			return false;
-
 	return true;
 }
 /**Determine if an array is zero.
@@ -284,7 +283,7 @@ inline bool MulArray(cg::ArrayView<T>& arr1, const cg::ArrayView<T>& arr2)
 \param exp The exponent to apply.
 \return A reference to num*/
 template<typename T>
-inline T& PowInPlace(T& num, const T& exp)
+inline T& PowInPlace(T& num, std::size_t exp)
 {
 	if (exp == 0)
 	{
