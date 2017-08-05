@@ -116,6 +116,7 @@
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ArrayView.hpp" />
     <ClInclude Include="BasicBits.hpp" />
     <ClInclude Include="BasicMathFuncs.hpp" />
     <ClInclude Include="Endian.hpp" />

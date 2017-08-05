@@ -174,7 +174,6 @@ void ShiftInsigB(T* arr1, std::size_t s1, std::size_t amt)
 	}
 	return;
 }
-
 /**Determine the bit number of the most significant bit. Bit numbers start at 0
 \param arr The array.
 \param s The size of the array.
