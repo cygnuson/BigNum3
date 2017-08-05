@@ -3,6 +3,7 @@
 #include <random>
 #include <ctime>
 #include <cassert>
+#include <iostream>
 
 #include "BigNum.hpp"
 #include "List.hpp"
@@ -21,23 +22,31 @@ bool TestBigNumMul(std::size_t amt);
 
 int main()
 {
-	/*uint64_t n1 = 95388766592158;
-	uint64_t n2 = 45589;
+	uint64_t n1 = 5356324927;
+	auto a = cg::BigNum<uint16_t, 4>();
+	a.PushArray(cg::AsArray<uint16_t>(n1), 4);
+
+	cg::BigNum<uint16_t, 4> b(a);
+	b.Get(0) = 99;
+
+	/*uint64_t n1 = 5356324927;
+	uint64_t n2 = 128216;
 	auto a = cg::BigNum<uint16_t, 4>();
 	a.PushArray(cg::AsArray<uint16_t>(n1), 4);
 	auto b = cg::BigNum<uint16_t, 4>();
 	b.PushArray(cg::AsArray<uint16_t>(n2), 4);
 
-	uint64_t answer = n1 / n2;
+	uint64_t answer = n1 % n2;
 	auto funcLambda = [&]()
 	{
-		a /= b;
+		a %= b;
 	};
 	funcLambda();
 
 	auto bAns = *((uint64_t*)a.Begin());
 
 	assert(answer == bAns);*/
+
 
 	TestBigLShift		(100000);
 	TestBigRShift		(100000);

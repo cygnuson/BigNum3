@@ -31,21 +31,40 @@ along with UltraNum2.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace cg
 {
+/**Set an array to zero.
+\param arr The array.
+\param s The size of the array.*/
+template<typename T>
+inline void ZeroOut(T* arr, std::size_t s)
+{
+	std::memset(arr, 0, s * sizeof(T));
+}
+/**Set an array to zero.
+\param arr The array.*/
+template<typename T>
+inline void ZeroOut(cg::ArrayView<T>& arr)
+{
+	arr.ZeroOut();
+}
 
 /**Determine if an array is zero.
 \param arr The array.
 \param s The size of the array.
 \return True if the array is zero.*/
 template<typename T>
-bool IsZero(const T* arr, std::size_t s)
+inline bool IsZero(const T* arr, std::size_t s)
 {
-	return std::count(arr, arr + s, 0) == s;
+	for (std::size_t i = 0; i < s; ++i)
+		if (arr[i] != 0)
+			return false;
+
+	return true;
 }
 /**Determine if an array is zero.
 \param arr The array.
 \return True if the array is zero.*/
 template<typename T>
-bool IsZero(const cg::ArrayView<T>& arr)
+inline bool IsZero(const cg::ArrayView<T>& arr)
 {
 	return IsZero(arr.Begin(), arr.Size());
 }
@@ -54,15 +73,15 @@ bool IsZero(const cg::ArrayView<T>& arr)
 \param s The size of the array.
 \return True if the array is zero.*/
 template<typename T>
-bool IsOne(const T* arr, std::size_t s)
+inline bool IsOne(const T* arr, std::size_t s)
 {
-	return (*arr == 1) && std::count(arr + 1, arr + s, 0) == s;
+	return (*arr == 1) && IsZero(arr + 1, s - 1);
 }
 /**Determine if an array is one.
 \param arr The array.
 \return True if the array is zero.*/
 template<typename T>
-bool IsOne(const cg::ArrayView<T>& arr)
+inline bool IsOne(const cg::ArrayView<T>& arr)
 {
 	return IsOne(arr.Begin(), arr.Size());
 }
@@ -74,26 +93,29 @@ that do not effect the value of the function.
 \param s2 The max size of r2.
 \return -1 if arr1 < arr2, 0 if arr1 == arr2, 1 if arr1 > arr2.*/
 template<typename T>
-int CompareArray(const T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
+inline int CompareArray(const T* arr1, std::size_t s1, const T* arr2,
+	std::size_t s2)
 {
-	if (s1 < s2)
+	if (s1 == s2)
+	{
+		auto beg1 = arr1 + (s1 - 1);
+		auto beg2 = arr2 + (s2 - 1);
+		auto end = arr1 - 1;
+		for (; beg1 != end; --beg1, --beg2)
+		{
+			if (*beg1 < *beg2)
+				return -1;
+			if (*beg1 > *beg2)
+				return 1;
+		}
+		return 0;
+	}
+	else if (s1 < s2)
 		/*arr1 < arr2*/
 		return -1;
-	if (s1 > s2)
+	else //(s1 > s2)
 		/*arr1 > arr2*/
 		return 1;
-
-	auto beg1 = arr1 + s1 - 1;
-	auto beg2 = arr2 + s2 - 1;
-	auto end = arr1 - 1;
-	for (; beg1 != end; --beg1, --beg2)
-	{
-		if (*beg1 < *beg2)
-			return -1;
-		if (*beg1 > *beg2)
-			return 1;
-	}
-	return 0;
 }
 
 /**Compare two objects.  This function assumes that there are no leading zeros
@@ -102,9 +124,10 @@ that do not effect the value of the function.
 \param arr2 The second array.
 \return -1 if arr1 < arr2, 0 if arr1 == arr2, 1 if arr1 > arr2.*/
 template<typename T>
-int CompareArray(const cg::ArrayView<T>& arr1, const cg::ArrayView<T>& arr2)
+inline int CompareArray(const cg::ArrayView<T>& arr1,
+	const cg::ArrayView<T>& arr2)
 {
-	return CompareArray(arr.Begin(), arr.Size(), arr2.Begin(), arr2.Size());
+	return CompareArray(arr1.Begin(), arr1.Size(), arr2.Begin(), arr2.Size());
 }
 
 /**Array adding function.  The carry will propagate over
@@ -115,7 +138,7 @@ adjacent pointers up to the amount in s1.
 \param s2 The max size of r2.
 \return false always.*/
 template<typename T>
-bool AddArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
+inline bool AddArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
 {
 	auto & l = *arr1;
 	auto & r = *arr2;
@@ -135,7 +158,7 @@ adjacent pointers up to the amount in s1.
 \param arr2 The second array.
 \return false always.*/
 template<typename T>
-bool AddArray(cg::ArrayView<T>& arr1, const cg::ArrayView<T>& arr2)
+inline bool AddArray(cg::ArrayView<T>& arr1, const cg::ArrayView<T>& arr2)
 {
 	return AddArray(arr1.Begin(), arr1.Size(), arr2.Begin(), arr2.Size());
 }
@@ -144,7 +167,7 @@ bool AddArray(cg::ArrayView<T>& arr1, const cg::ArrayView<T>& arr2)
 \param s The size of the array.
 \param n A number to add to the array.*/
 template<typename T>
-void AddArray(T* arr, std::size_t s, const T& n)
+inline void AddArray(T* arr, std::size_t s, const T& n)
 {
 	AddArray(arr, s, &n, 1);
 }
@@ -152,7 +175,7 @@ void AddArray(T* arr, std::size_t s, const T& n)
 \param arr The array.
 \param n A number to add to the array.*/
 template<typename T>
-void AddArray(cg::ArrayView<T>& arr, const T& n)
+inline void AddArray(cg::ArrayView<T>& arr, const T& n)
 {
 	AddArray(arr.Begin(), arr.Size(), n);
 }
@@ -164,7 +187,7 @@ adjacent pointers up to the amount in s1.
 \param s2 The max size of r2.
 \return True if the result went below zero. False if its still > 0.*/
 template<typename T>
-bool SubArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
+inline bool SubArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
 {
 	auto & l = *arr1;
 	bool doCarry = *arr2 > l;
@@ -192,7 +215,7 @@ adjacent pointers up to the amount in s1.
 \param arr2 The second array.
 \return True if the result went below zero. False if its still > 0.*/
 template<typename T>
-bool SubArray(cg::ArrayView<T>& arr1, const cg::ArrayView<T>& arr2)
+inline bool SubArray(cg::ArrayView<T>& arr1, const cg::ArrayView<T>& arr2)
 {
 	return SubArray(arr1.Begin(), arr1.Size(), arr2.Begin(), arr2.Size());
 }
@@ -201,7 +224,7 @@ bool SubArray(cg::ArrayView<T>& arr1, const cg::ArrayView<T>& arr2)
 \param s The size of the array.
 \param n A number to sub from the array.*/
 template<typename T>
-void SubArray(T* arr, std::size_t s, const T& n)
+inline void SubArray(T* arr, std::size_t s, const T& n)
 {
 	SubArray(arr, s, &n, 1);
 }
@@ -209,7 +232,7 @@ void SubArray(T* arr, std::size_t s, const T& n)
 \param arr The array.
 \param n A number to sub from the array.*/
 template<typename T>
-void SubArray(cg::ArrayView<T>& arr, const T& n)
+inline void SubArray(cg::ArrayView<T>& arr, const T& n)
 {
 	SubArray(arr.Begin(), arr.Size(), n);
 }
@@ -222,7 +245,7 @@ that is half the size of the actual type.
 \param s2 The max size of r2.
 \return false always.*/
 template<typename T>
-bool MulArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
+inline bool MulArray(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
 {
 	static_assert(sizeof(T) > 1, "T must be at least 2 bytes long.");
 	using DT = typename cg::DemoteType<T>::Type;
@@ -252,7 +275,7 @@ that is half the size of the actual type.
 \param arr2 The second array.
 \return false always.*/
 template<typename T>
-bool MulArray(cg::ArrayView<T>& arr1, const cg::ArrayView<T>& arr2)
+inline bool MulArray(cg::ArrayView<T>& arr1, const cg::ArrayView<T>& arr2)
 {
 	return MulArray(arr1.Begin(), arr1.Size(), arr2.Begin(), arr2.Size());
 }
@@ -285,94 +308,145 @@ inline T& PowInPlace(T& num, const T& exp)
 \param s1 The size of arr1.
 \param arr2 The second array that will remain larger than arr1.
 \param s2 The size of the second array.
+\param max The total amount of shifts that may be made.
 \return The amount of shifts made on arr1.*/
 template<typename T>
-std::size_t MaximumShiftMSB(T* arr1, std::size_t s1, const T* arr2, std::size_t s2)
+inline std::size_t MaximumShift(T* arr1, std::size_t s1, const T* arr2,
+	std::size_t s2, std::size_t max)
 {
+	if (max == 0)
+		return 0;
 	std::size_t msb_1 = MSBNumber(arr1, s1);
 	std::size_t msb_2 = MSBNumber(arr2, s2);
-	std::size_t shfAmt = (msb_2 - 2) - msb_1;
-	ShiftSigB(arr1, s1, shfAmt);
-	return shfAmt;
+	if (msb_1 < msb_2)
+	{
+		std::size_t shiftAmt = (msb_2 - 1) - msb_1;
+		shiftAmt = shiftAmt <= max ? shiftAmt : max;
+		ShiftSigB(arr1, s1, shiftAmt);
+		return shiftAmt;
+	}
+	else if (msb_1 > msb_2)
+	{
+		std::size_t shiftAmt = (msb_1)-(msb_2 - 1);
+		shiftAmt = shiftAmt <= max ? shiftAmt : max;
+		ShiftInsigB(arr1, s1, shiftAmt);
+		return shiftAmt;
+	}
+	/*both are the same msb*/
+	std::size_t shiftAmt = 1;
+	shiftAmt = shiftAmt <= max ? shiftAmt : max;
+	ShiftInsigB(arr1, s1, shiftAmt);
+	return shiftAmt;
 }
 /**Shift an array to its maximum value while staying less than some other num.
 \param arr1 The array that will be shifted.
 \param arr2 The second array that will remain larger than arr1.
+\param max The total amount of shifts that may be made.
 \return The amount of shifts made on arr1.*/
 template<typename T>
-std::size_t MaximumShiftMSB(cg::ArrayView<T>& arr1, 
-	const cg::ArrayView<T>& arr2)
+inline std::size_t MaximumShift(cg::ArrayView<T>& arr1,
+	const cg::ArrayView<T>& arr2, std::size_t max)
 {
-	return MaximumShiftMSB(arr1.Begin(), arr1.Size(), 
-		arr2.Begin(), arr2.Size());
+	return MaximumShift(arr1.Begin(), arr1.Size(),
+		arr2.Begin(), arr2.Size(), max);
 }
 /**The basic division function.  This function assumes there are no MSB zeros.
-\param arr1 The first dividend array.
+\param arr1 The first dividend array.  Will be the answer after the function
+returnes.
 \param s1 The size of the first array.
 \param arr2 The second divisor array.
 \param s2 The size of the second array.
-\param arr3 The third array that will hold the modulo of the operation. Iff its
+\param arr3 The third array that will hold the modulo of the operation. If its
 nullptr (or 0) it will be ignored.  If its not false, it must be the same size
-as s1.
-\return false always.*/
+as s1.*/
 template<typename T>
-bool DivArray_Shift(T* arr1, std::size_t s1, const T* arr2, std::size_t s2,
-	T* arr3)
+inline void DivArray_Shift(T* arr1, std::size_t s1, const T* arr2,
+	std::size_t s2, T* arr3)
 {
 	static_assert(sizeof(T) > 1, "T must be at least 2 bytes long.");
-	if (s1 < s2)
+	const static T TMax = std::numeric_limits<T>::max();
+	const std::size_t s1T = s1 * sizeof(T);
+	if ((s1 == 1) && (s2 == 1))
 	{
-		if (arr3 != nullptr)
-		{
-			std::memset(arr3, 0, s1 * sizeof(T));
-			std::memmove(arr3, arr1, s1 * sizeof(T));
-		}
-		std::memset(arr1, 0, s1 * sizeof(T));
-		return false;
+		if (arr3)
+			*arr3 = *arr1;
+		*arr1 /= *arr2;
+		if (arr3)
+			*arr3 %= *arr2;
+		return;
 	}
 	if (IsZero(arr2, s2))
 		throw std::invalid_argument("Divisor is zero.");
-	T* tBuf = new T[s1]();
-	T* counter = new T[s1]();
-	std::memmove(tBuf, arr2, s2 * sizeof(T));
-	auto shfAmt = MaximumShiftMSB(tBuf, s1, arr1, s1);
-	int c = CompareArray(arr1, s1, tBuf, s1);
-	if (c == 0)
+	if (IsOne(arr2, s2))
 	{
-		std::memset(arr1, 0, s1 * sizeof(T));
-		std::memset(arr3, 0, s1 * sizeof(T));
-		*arr1 = 1;
-		return false;
+		if (arr3)
+			ZeroOut(arr3, s1);
+		return;
 	}
-	bool go = c == 1;
-	while (go && !IsZero(tBuf, s1))
+	bool cleanArr3 = false;
+	if (!arr3)
 	{
-		SubArray(arr1, s1, tBuf, s1);
-		AddArray<T>(counter, s1, 1);
-		go = CompareArray(arr1, s1, tBuf, s1) == 1;
-		while (!go)
+		arr3 = new T[s1];
+		cleanArr3 = true;
+	}
+	/*move the contents of array-1 into array-3 so that it contains the answer
+	when all is said and done.*/
+	std::memmove(arr3, arr1, s1 * sizeof(T));
+	/**arr1 will be the counter (and then the answer when done).*/
+	std::memset(arr1, 0, s1 * sizeof(T));
+	T* answerCounter = arr1;
+	T* dividend = arr3;
+	T* divisor = new T[s1]();
+	std::memmove(divisor, arr2, s2 * sizeof(T));
+	auto compareResult = CompareArray(dividend, s1, divisor, s1);
+	if (compareResult == 0)
+	{/*Both oprands are the same, answer = 1, modulo = 0 (already moved
+	 to the right spots by this line).*/
+		answerCounter[0] = 1;
+		std::memset(dividend, 0, s1T);
+	}
+	/*arr1 is larger, can do some math here.*/
+	auto shifted = MaximumShift(divisor, s1, dividend, s1, TMax);
+	compareResult = CompareArray(dividend, s1, divisor, s1);
+	while (compareResult == 1)
+	{
+		SubArray(dividend, s1, divisor, s1);
+		AddArray<T>(answerCounter, s1, 1);
+		compareResult = CompareArray(dividend, s1, divisor, s1);
+		if (compareResult == 0)
 		{
-			if (shfAmt == 0)
-			{
-				go = false;
+			std::memset(dividend, 0, s1T);
+			AddArray<T>(answerCounter, s1, 1);
+			ShiftSigB(answerCounter, s1, shifted);
+			break;
+		}
+		else if (compareResult == -1)
+		{/*divident is < divisor.*/
+			if (shifted == 0)
 				break;
+			auto unshift
+				= MaximumShift(divisor, s1, dividend, s1, shifted);
+			shifted -= unshift;
+			ShiftSigB(answerCounter, s1, unshift);
+			if (shifted > 0)
+				/*dividend will be > divisor here. Manually set the result.*/
+				compareResult = 1;
+			else
+			{/*shifted is zero, must do real comparison.*/
+				compareResult = CompareArray(dividend, s1, divisor, s1);
+				if (compareResult == 0)
+				{
+					std::memset(dividend, 0, s1T);
+					AddArray<T>(answerCounter, s1, 1);
+					ShiftSigB(answerCounter, s1, shifted);
+					break;
+				}
 			}
-			ShiftInsigB(tBuf, s1, 1);
-			--shfAmt;
-			ShiftSigB(counter, s1, 1);
-			c = CompareArray(arr1, s1, tBuf, s1);
-			go = c == 1 || c == 0;
 		}
 	}
-	if (arr3 != nullptr)
-	{
-		std::memset(arr3, 0, s1 * sizeof(T));
-		std::memmove(arr3, arr1, s1 * sizeof(T));
-	}
-	std::memmove(arr1, counter, s1 * sizeof(T));
-	delete[] tBuf;
-	delete[] counter;
-	return false;
+	if (cleanArr3)
+		delete[] arr3;
+	delete[] divisor;
 }
 
 /**The basic division function.  This function assumes there are no MSB zeros.
@@ -380,16 +454,15 @@ bool DivArray_Shift(T* arr1, std::size_t s1, const T* arr2, std::size_t s2,
 \param arr2 The second divisor array.
 \param arr3 The third array that will hold the modulo of the operation. Iff its
 nullptr (or 0) it will be ignored.  If its not false, it must be the same size
-as s1.
-\return false always.*/
+as s1.*/
 template<typename T>
-bool DivArray_Shift(cg::ArrayView<T>& arr1,const cg::ArrayView<T>& arr2, 
+inline void DivArray_Shift(cg::ArrayView<T>& arr1, const cg::ArrayView<T>& arr2,
 	cg::ArrayView<T>& arr3)
 {
 	if (arr1.Size() != arr3.Size())
 		throw std::runtime_error(
 			"The size of arr1 and arr2 must be the same.");
-	return DivArray_Shift(arr1.Begin(), arr1.Size(), arr2.Begin(), 
+	DivArray_Shift(arr1.Begin(), arr1.Size(), arr2.Begin(),
 		arr2.Size(), arr3.Begin());
 }
 

@@ -48,6 +48,7 @@ along with UltraNum2.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Helpers.hpp"
 #include "Type.hpp"
+#include "ArrayView.hpp"
 
 namespace cg 
 {
@@ -103,6 +104,15 @@ void ShiftSig(T* arr1, std::size_t s1, std::size_t amt)
 	std::memset(arr1, 0, amt * sizeof(T));
 	return;
 }
+/**Shift the array toward the significant side.  This function shifts enire
+units of T.
+\param arr1 The array.
+\param amt The amount to shift.*/
+template<typename T>
+void ShiftSig(cg::ArrayView<T>& arr1, std::size_t amt)
+{
+	ShiftSig(arr1.Begin(), arr1.Size(), amt);
+}
 /**Shift the array toward the significant side.  This function shifts bits.
 \param arr1 The array.
 \param s1 The size of the array.
@@ -129,6 +139,14 @@ void ShiftSigB(T* arr1, std::size_t s1, std::size_t amt)
 	}
 	return;
 }
+/**Shift the array toward the significant side.  This function shifts bits.
+\param arr1 The array.
+\param amt The amount to shift (in bits).*/
+template<typename T>
+void ShiftSigB(cg::ArrayView<T>& arr1, std::size_t amt)
+{
+	ShiftSigB(arr1.Begin(), arr1.Size(), amt);
+}
 /**Shift the array toward the significant side.  This function shifts enire
 units of T.
 \param arr1 The array.
@@ -147,6 +165,15 @@ void ShiftInsig(T* arr1, std::size_t s1, std::size_t amt)
 	std::memmove(arr1, arr1 + amt, (s1 - amt) * sizeof(T));
 	std::memset(arr1 + (s1 - amt), 0, amt * sizeof(T));
 	return;
+}
+/**Shift the array toward the significant side.  This function shifts enire
+units of T.
+\param arr1 The array.
+\param amt The amount to shift.*/
+template<typename T>
+void ShiftInsig(cg::ArrayView<T>& arr1, std::size_t amt)
+{
+	ShiftInsig(arr1.Begin(), arr1.Size(), amt);
 }
 /**Shift the array toward the significant side.  This function shifts bits.
 \param arr1 The array.
@@ -173,6 +200,14 @@ void ShiftInsigB(T* arr1, std::size_t s1, std::size_t amt)
 		carry = nC;
 	}
 	return;
+}
+/**Shift the array toward the significant side.  This function shifts bits.
+\param arr1 The array.
+\param amt The amount to shift.*/
+template<typename T>
+void ShiftInsigB(cg::ArrayView<T>& arr1, std::size_t amt)
+{
+	ShiftInsigB(arr1.Begin(), arr1.Size(), amt);
 }
 /**Determine the bit number of the most significant bit. Bit numbers start at 0
 \param arr The array.

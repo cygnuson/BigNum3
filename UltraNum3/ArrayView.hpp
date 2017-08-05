@@ -40,20 +40,20 @@ public:
 	/**Create a copy data.
 	\param other The other array view.
 	\return The deep copied array view.*/
-	static ArrayView<T> Copy(const ArrayView<T>& other)
+	inline static ArrayView<T> Copy(const ArrayView<T>& other)
 	{
 		ArrayView<T> av(other.Size());
-		std::memcpy(av.data(), other.data(), other.Size());
+		std::memcpy(av.data(), other.data(), other.Size()*sizeof(T));
 		return av;
 	}
 	/**Create a copy data.
 	\param data The other data to copy.
 	\param size The other data size.
 	\return The deep copied array view.*/
-	static ArrayView<T> Copy(const T* data, std::size_t size)
+	inline static ArrayView<T> Copy(const T* data, std::size_t size)
 	{
 		ArrayView<T> av(size);
-		std::memcpy(av.data(), data, size);
+		std::memcpy(av.data(), data, size*sizeof(T));
 		return av;
 	}
 	///////////////////////////////////////////////////////////////////////////
@@ -118,7 +118,7 @@ public:
 
 	/**Move assign
 	\param other The thing to move.*/
-	void operator=(ArrayView<T>&& other)
+	inline void operator=(ArrayView<T>&& other)
 	{
 		/*make sure to delete our current data if needed.*/
 		if (m_own)
@@ -134,7 +134,7 @@ public:
 	/**Copy assign
 	\param other The thing  to copy.  Data will not be copied, only the
 	pointer.  This object will not be able to delete the pointer.*/
-	void operator=(const ArrayView<T>& other)
+	inline void operator=(const ArrayView<T>& other)
 	{
 		m_data = other.m_data;
 		m_size = other.m_size;
@@ -146,7 +146,7 @@ public:
 	/**Fill the array with something.
 	\param o The object to fill the array with.*/
 	template<typename U>
-	void Fill(U&& o)
+	inline void Fill(U&& o)
 	{
 		auto sz = Size();
 		for(std::size_t i = 0; i < sz; ++i)
@@ -154,9 +154,14 @@ public:
 			new (m_data + i) T(std::forward<U>(o));
 		}
 	}
+	/**Zero out the array.*/
+	inline void ZeroOut()
+	{
+		std::memset(m_data, 0, m_size * sizeof(T));
+	}
 	/**Determine if the view is empty or not.
 	\return True if the view is empty and invalid.*/
-	bool Good() const
+	inline bool Good() const
 	{
 		return !m_data;
 	}
@@ -183,7 +188,7 @@ public:
 	/**Copy this data to another location.
 	\param data The location to write to.
 	\param size The max size of the destination.*/
-	void CopyTo(char* data, std::size_t size)
+	inline void CopyTo(char* data, std::size_t size)
 	{
 		auto sSize = size < m_size ? size : m_size;
 		std::memmove(data, m_data, sSize * sizeof(T));
@@ -192,7 +197,7 @@ public:
 	the null term for strings is reached.
 	\param data The location to write to.
 	\param maxSize The max size of the destination.*/
-	void CopyStr(char* data, std::size_t maxSize)
+	inline void CopyStr(char* data, std::size_t maxSize)
 	{
 		std::size_t i = 0;
 		do {
@@ -207,14 +212,14 @@ public:
 	/**Operator access.
 	\param index The index to access.
 	\return The element at the index.*/
-	T& operator[](std::size_t index)
+	inline T& operator[](std::size_t index)
 	{
 		return m_data[index];
 	}
 	/**Operator access.
 	\param index The index to access.
 	\return The element at the index.*/
-	const T& operator[](std::size_t index) const
+	inline const T& operator[](std::size_t index) const
 	{
 		if (!Good())
 			throw std::runtime_error("The array is invalid.");
@@ -258,25 +263,25 @@ public:
 	}
 	/**Get a Begin() iterator for other lists.
 	\return A poitner to the first element.*/
-	T* Begin()
+	inline T* Begin()
 	{
 		return m_data;
 	}
 	/**Get a Begin() iterator for other lists.
 	\return A poitner to the first element.*/
-	const T* Begin() const
+	inline const T* Begin() const
 	{
 		return m_data;
 	}
 	/**Get a one past the end iterator for otehr list compat.
 	\return A pointer that is one past the end.*/
-	const T* End() const
+	inline const T* End() const
 	{
 		return m_data + m_size;
 	}
 	/**Get a one past the end iterator for otehr list compat.
 	\return A pointer that is one past the end.*/
-	T* End()
+	inline T* End()
 	{
 		return m_data + m_size;
 	}

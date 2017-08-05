@@ -59,21 +59,30 @@ public:
 	{
 
 	}
+	/**Copy a bignum.
+	\param other The thing to copy.*/
+	BigNum(const Self& other)
+		:m_data(std::move(other.m_data.Copy()))
+	{
+		mf_addFunc = other.mf_addFunc;
+		mf_compFunc = other.mf_compFunc;
+		mf_digitShiftLSBFunc = other.mf_digitShiftLSBFunc;
+		mf_digitShiftLSDFunc = other.mf_digitShiftLSDFunc;
+		mf_digitShiftMSBFunc = other.mf_digitShiftMSBFunc;
+		mf_digitShiftMSDFunc = other.mf_digitShiftMSDFunc;
+		mf_divFunc = other.mf_divFunc;
+		mf_mulFunc = other.mf_mulFunc;
+		mf_subFunc = other.mf_subFunc;
+	};
 	/**Default for empty number.*/
 	BigNum()
 	{
 
 	}
-	/**Create with a bunch of nums.
-	\param t The number to emplace.
-	\param ts A bunch of numbers to emplace.*/
-	template<typename...Ts>
-	BigNum(Ts&&...ts)
-	{
-		if (sizeof...(Ts) % 2 != 0)
-			throw std::invalid_argument("Must have even number of digits.");
-		char dummy[sizeof...(Ts)] = { (m_data.PushBack(ts), 0)... };
-	}
+	/**Create a big num with a initializer list.
+	\param il The init list.*/
+	BigNum(std::initializer_list<DataType>&& il)
+		:m_data(std::forward<std::initializer_list<DataType>>(il)) {}
 
 	///////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////ITERATORS HERE//
@@ -189,7 +198,7 @@ public:
 		auto newSize = (Size() + r.Size());
 		while (Size() < newSize && m_data.CanInsert())
 			m_data.PushBack(0);
-		(mf_mulFunc)(Begin(), Size(), r.Begin(), r.Size());
+		(mf_mulFunc)(Begin(), Size(), r.Begin(), r.RealSize());
 		return *this;
 	}
 	/**Do a math operation.
@@ -197,7 +206,7 @@ public:
 	\return A reference to this.*/
 	Self& operator/=(const DataType& r)
 	{
-		(mf_divFunc)(Begin(), Size(), &r, 1, nullptr);
+		(mf_divFunc)(Begin(), RealSize(), &r, 1, nullptr);
 		return *this;
 	}
 	/**Do a math operation.
@@ -206,7 +215,7 @@ public:
 	template<typename U, std::size_t S>
 	Self& operator/=(const BigNum<U, S>& r)
 	{
-		(mf_divFunc)(Begin(), Size(), r.Begin(), r.RealSize(), nullptr);
+		(mf_divFunc)(Begin(), RealSize(), r.Begin(), r.RealSize(), nullptr);
 		return *this;
 	}
 	/**Do a math operation.
@@ -214,9 +223,11 @@ public:
 	\return A reference to this.*/
 	Self& operator%=(const DataType& r)
 	{
-		DataType* t = new DataType[Size()];
-		(mf_divFunc)(Begin(), Size(), &r, 1, t);
-		std::memmove(Begin(), t, Size() * sizeof(DataType));
+		/**The real size will change after the division.*/
+		auto tCopyAmt = RealSize();
+		DataType* t = new DataType[RealSize()];
+		(mf_divFunc)(Begin(), RealSize(), &r, 1, t);
+		std::memmove(Begin(), t, tCopyAmt * sizeof(DataType));
 		return *this;
 	}
 	/**Do a math operation.
@@ -225,9 +236,26 @@ public:
 	template<typename U, std::size_t S>
 	Self& operator%=(const BigNum<U, S>& r)
 	{
-		DataType* t = new DataType[Size()];
-		(mf_divFunc)(Begin(), Size(), r.Begin(), r.RealSize(), t);
-		std::memmove(Begin(), t, Size() * sizeof(DataType));
+		/**The real size will change after the division.*/
+		auto tCopyAmt = RealSize();
+		DataType* t = new DataType[RealSize()];
+		(mf_divFunc)(Begin(), RealSize(), r.Begin(), r.RealSize(), t);
+		std::memmove(Begin(), t, tCopyAmt * sizeof(DataType));
+		return *this;
+	}
+	/**Do a math operation.
+	\return A copy of this before incrementing.*/
+	Self operator++(int)
+	{
+		auto copy = *this;
+		AddArray<DataType>(Begin(), Size(), 1);
+		return copy;
+	}
+	/**Do a math operation.
+	\return A reference to this after incrementing.*/
+	Self& operator++()
+	{
+		AddArray<DataType>(Begin(), Size(), 1);
 		return *this;
 	}
 
@@ -247,7 +275,22 @@ public:
 	/**Do a comparison.
 	\param other The thing to compare to.
 	\return The result of the comparison.*/
+	bool operator<(const DataType& other) const
+	{
+		return (mf_compFunc)(Begin(), RealSize(), &other,
+			1) == -1;
+	}
+	/**Do a comparison.
+	\param other The thing to compare to.
+	\return The result of the comparison.*/
 	bool operator<=(const Self& other) const
+	{
+		return *this < other || *this == other;
+	}
+	/**Do a comparison.
+	\param other The thing to compare to.
+	\return The result of the comparison.*/
+	bool operator<=(const DataType& other) const
 	{
 		return *this < other || *this == other;
 	}
@@ -261,7 +304,21 @@ public:
 	/**Do a comparison.
 	\param other The thing to compare to.
 	\return The result of the comparison.*/
+	bool operator>(const DataType& other) const
+	{
+		return !(*this <= other);
+	}
+	/**Do a comparison.
+	\param other The thing to compare to.
+	\return The result of the comparison.*/
 	bool operator>=(const Self& other) const
+	{
+		return !(*this < other);
+	}
+	/**Do a comparison.
+	\param other The thing to compare to.
+	\return The result of the comparison.*/
+	bool operator>=(const DataType& other) const
 	{
 		return !(*this < other);
 	}
@@ -270,13 +327,28 @@ public:
 	\return The result of the comparison.*/
 	bool operator!=(const Self& other) const
 	{
-		return (mf_compFunc)(Begin(), RealSize(), other.Begin(), 
+		return (mf_compFunc)(Begin(), RealSize(), other.Begin(),
 			other.RealSize()) != 0;
 	}
 	/**Do a comparison.
 	\param other The thing to compare to.
 	\return The result of the comparison.*/
+	bool operator!=(const DataType& other) const
+	{
+		return (mf_compFunc)(Begin(), RealSize(), &other,
+			1) != 0;
+	}
+	/**Do a comparison.
+	\param other The thing to compare to.
+	\return The result of the comparison.*/
 	bool operator==(const Self& other) const
+	{
+		return !(*this != other);
+	}
+	/**Do a comparison.
+	\param other The thing to compare to.
+	\return The result of the comparison.*/
+	bool operator==(const DataType& other) const
 	{
 		return !(*this != other);
 	}
@@ -462,7 +534,7 @@ private:
 		= bool(*)(DataType*, std::size_t, const DataType*, std::size_t);
 	/**The type of division function pointers.*/
 	using DivFuncPtr
-		= bool(*)(DataType*, std::size_t, const DataType*, std::size_t,
+		= void(*)(DataType*, std::size_t, const DataType*, std::size_t,
 			DataType*);
 	/**The type of compare function pointers.*/
 	using CompareFuncPtr

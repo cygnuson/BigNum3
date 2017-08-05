@@ -59,7 +59,7 @@ public:
 	/**Move ctor, to make it work with
 	\param other The thing to move.*/
 	Storage(SelfType&& other)
-		: m_size(std::move(other.m_size))
+		: m_cap(SizeP), m_size(other.m_size)
 	{
 		for (std::size_t i = 0; i < other.m_size; ++i)
 			new (Addr() + i) DataType(std::move(other.Addr()[i]));
@@ -154,7 +154,7 @@ protected:
 	\return The address of the data.*/
 	const DataType* Addr(std::size_t i = 0)const
 	{
-		return ((const DataType*)(m_data+(i*sizeof(T))));
+		return ((const DataType*)(m_data + (i * sizeof(T))));
 	}
 	/**Stop copying*/
 	Storage(const SelfType&) = delete;
@@ -194,7 +194,7 @@ public:
 	Storage(std::size_t cap = 0) :m_cap(8), m_size(0)
 	{
 		if (cap != 0)
-			m_data = (DataType*) std::malloc(m_cap* sizeof(DataType));
+			m_data = (DataType*)std::malloc(m_cap * sizeof(DataType));
 		else
 			m_data = nullptr;
 	};
@@ -205,13 +205,12 @@ public:
 	{
 		auto end = arr + aSize;
 		for (std::size_t i = 0; arr != end; ++arr)
-			Emplace(i++,*arr);
+			Emplace(i++, *arr);
 	}
 	/**Move ctor
 	\param other The thing to move.*/
 	Storage(SelfType&& other)
-		:m_cap(std::move(other.m_cap)), m_data(std::move(other.m_data)),
-		m_size(std::move(other.m_size))
+		:m_cap(other.m_cap), m_data(other.m_data), m_size(other.m_size)
 	{
 		other.m_data = nullptr;
 	};
@@ -309,11 +308,11 @@ protected:
 		if (!m_data)
 		{
 			/**Dont initialize...*/
-			m_data = (T*) std::malloc(sizeof(T)*amt);
+			m_data = (T*)std::malloc(sizeof(T)*amt);
 			return;
 		}
 		/**Dont initialize...*/
-		T* nData = (T*) std::malloc(sizeof(T)*amt);
+		T* nData = (T*)std::malloc(sizeof(T)*amt);
 		std::memmove(nData, Addr(), sizeof(T) * m_size);
 		m_cap = amt;
 
