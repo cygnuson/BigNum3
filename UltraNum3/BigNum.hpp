@@ -184,8 +184,11 @@ public:
 	\return A reference to this.*/
 	Self& operator*=(const DataType& r)
 	{
-		if (m_data.CanInsert())
+		if (m_data.CanInsert() && RealSize() == Size())
+		{
 			m_data.PushBack(0);
+			m_data.Get(Size() - 1) = 0;
+		}
 		(mf_mulFunc)(Begin(), Size(), &r, 1);
 		return *this;
 	}
@@ -195,9 +198,12 @@ public:
 	template<typename U, std::size_t S>
 	Self& operator*=(const BigNum<U, S>& r)
 	{
-		auto newSize = (Size() + r.Size());
+		auto newSize = (RealSize() + r.Size());
 		while (Size() < newSize && m_data.CanInsert())
+		{
 			m_data.PushBack(0);
+			m_data.Get(Size() - 1) = 0;
+		}
 		(mf_mulFunc)(Begin(), Size(), r.Begin(), r.RealSize());
 		return *this;
 	}

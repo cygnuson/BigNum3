@@ -22,13 +22,6 @@ bool TestBigNumMul(std::size_t amt);
 
 int main()
 {
-	uint64_t n1 = 5356324927;
-	auto a = cg::BigNum<uint16_t, 4>();
-	a.PushArray(cg::AsArray<uint16_t>(n1), 4);
-
-	cg::BigNum<uint16_t, 4> b(a);
-	b.Get(0) = 99;
-
 	/*uint64_t n1 = 5356324927;
 	uint64_t n2 = 128216;
 	auto a = cg::BigNum<uint16_t, 4>();
@@ -46,6 +39,7 @@ int main()
 	auto bAns = *((uint64_t*)a.Begin());
 
 	assert(answer == bAns);*/
+
 
 
 	TestBigLShift		(100000);

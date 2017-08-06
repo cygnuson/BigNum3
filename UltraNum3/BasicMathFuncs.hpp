@@ -254,7 +254,7 @@ inline bool MulArray(T* arr1, const  std::size_t s1p,
 	/*The arrays are casted to half the size type, so double the amount of
 	units.*/
 	const std::size_t s1 = s1p + s1p;
-	const std::size_t s2 = s2p + s1p;
+	const std::size_t s2 = s2p + s2p;
 	DT* tArr = new DT[s1]();
 
 	for (std::size_t i = 0; i < s1; ++i)
@@ -262,7 +262,8 @@ inline bool MulArray(T* arr1, const  std::size_t s1p,
 		for (std::size_t j = 0; j < s2; ++j)
 		{
 			T t = T(((DT*)arr1)[i]) * ((DT*)arr2)[j];
-			AddArray(tArr + i + j, s1 - i - j, (DT*)&t, 2);
+			if(t != 0)
+				AddArray(tArr + i + j, s1 - i - j, (DT*)&t, 2);
 		}
 	}
 
@@ -465,6 +466,47 @@ inline void DivArray_Shift(cg::ArrayView<T>& arr1,
 		throw std::runtime_error(
 			"The size of arr1 and arr2 must be the same.");
 	DivArray_Shift(arr1.Begin(), arr1.Size(), arr2.Begin(),
+		arr2.Size(), arr3.Begin());
+}
+
+
+/**The basic division function.  This function assumes there are no MSB zeros.
+\param arr1 The first dividend array.  Will be the answer after the function
+returnes.
+\param s1 The size of the first array.
+\param arr2 The second divisor array.
+\param s2 The size of the second array.
+\param arr3 The third array that will hold the modulo of the operation. If its
+nullptr (or 0) it will be ignored.  If its not false, it must be the same size
+as s1.*/
+template<typename T>
+inline void DivArray_Split(T* arr1, const std::size_t s1, const T* arr2,
+	const std::size_t s2, T* arr3)
+{
+	std::size_t position = 0;
+	T* answer = new T[s1]();
+	T* mod = new T[s2]();
+	for (std::size_t i = 0; i < s2; ++i)
+	{
+		
+
+	}
+}
+
+/**The basic division function.  This function assumes there are no MSB zeros.
+\param arr1 The first dividend array.
+\param arr2 The second divisor array.
+\param arr3 The third array that will hold the modulo of the operation. Iff its
+nullptr (or 0) it will be ignored.  If its not false, it must be the same size
+as s1.*/
+template<typename T>
+inline void DivArray_Split(cg::ArrayView<T>& arr1,
+	const cg::ArrayView<T>& arr2, cg::ArrayView<T>& arr3)
+{
+	if (arr1.Size() != arr3.Size())
+		throw std::runtime_error(
+			"The size of arr1 and arr2 must be the same.");
+	DivArray_Split(arr1.Begin(), arr1.Size(), arr2.Begin(),
 		arr2.Size(), arr3.Begin());
 }
 

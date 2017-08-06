@@ -70,9 +70,14 @@ The \theobj class is just a fancy wrapper for a list of \Verb+cg::Num<T>+ object
 
 \subsection{Using \theobj}
 
+Using \theobj is simple. A \theobj with a size of 0 will be unlimited size, or a none-zero size is a stack allocated number with that size max.  Use it like any other object.
 
 \begin{lstlisting}[language=C++, label=code:1, caption=Using \theobj]
+cg::BigNum<uint64_t, 10> a = { 0,1,2}; //stack allocated, 10 digits, 3 initial digits.
+cg::BigNum<uint64_t, 0> b = { 2 }; //heap allocated, unlimited digits, 1 initial digit.
 
+for(std::size_t i = 0; i < 1000000000; ++i)
+	a *= b; //will getreally big really fast.
 \end{lstlisting}
 
 
